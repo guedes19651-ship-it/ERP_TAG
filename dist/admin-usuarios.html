@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Usuarios - ERP TAG</title>
+  <link rel="stylesheet" href="erp.css">
+  <style>
+    body { overflow-y: hidden; }
+    .admin-main { height: calc(100vh - 60px); padding: 80px 30px 24px; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; }
+    .admin-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; }
+    .dois-paineis { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: stretch; min-height: 0; flex: 1; overflow: hidden; }
+    .painel { background: #141414; border: 1px solid #222; border-radius: 10px; overflow: hidden; }
+    .painel-usuarios { display: flex; flex-direction: column; min-height: 0; }
+    .painel-permissoes { display: flex; flex-direction: column; min-height: 0; }
+    .painel-header { padding: 14px 18px; border-bottom: 1px solid #222; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .permissoes-acoes-header { display: flex; align-items: center; gap: 8px; position: relative; }
+    .permissoes-acoes-header[hidden] { display: none !important; }
+    .btn-perm-acao, .btn-topo { background: #007a8c; border: none; color: #fff; padding: 8px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-perm-acao:hover, .btn-topo:hover { background: #009ab0; }
+    .btn-perm-menu { background: #007a8c; border: none; color: #fff; width: 36px; height: 34px; border-radius: 6px; cursor: pointer; font-size: 18px; line-height: 1; }
+    .btn-perm-menu:hover { background: #009ab0; }
+    .menu-perm { position: absolute; right: 0; top: 40px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; min-width: 180px; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
+    .menu-perm[hidden] { display: none !important; }
+    .menu-perm-item { padding: 11px 16px; cursor: pointer; font-size: 13px; color: #e5e5e5; border-top: 1px solid #222; }
+    .menu-perm-item:first-child { border-top: 0; }
+    .menu-perm-item:hover { background: #222; }
+    .menu-perm-item.disabled { color: #666; cursor: not-allowed; }
+    .menu-perm-item.disabled:hover { background: transparent; }
+    .menu-perm-item.excluir { color: #ef4444; }
+    .menu-perm-item.excluir:hover { background: #2c0a0a; }
+    #lista-usuarios { flex: 1; min-height: 0; overflow-y: auto; }
+    .usuario-item { padding: 12px 18px; border-bottom: 1px solid #303030; cursor: pointer; transition: background .15s; }
+    .usuario-item:nth-child(even) { background: rgba(255,255,255,.035); }
+    .usuario-item:hover { background: #1a1a1a; }
+    .usuario-item.selecionado { background: rgba(59,130,246,.1); border-left: 3px solid #3b82f6; }
+    .u-nome { font-size: 14px; font-weight: 500; color: #fff; }
+    .u-login { font-size: 12px; color: #8b8b8b; margin-top: 3px; }
+    #painel-permissoes { display: flex; flex-direction: column; min-height: 0; flex: 1; padding: 12px; }
+    .permissoes-vazio { flex: 1; padding: 50px 20px; text-align: center; color: #fff; font-size: 14px; }
+    .permissoes-lista-card { background: #111; border: 1px solid #222; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; min-height: 0; flex: 1; }
+    .permissoes-lista { overflow-y: auto; min-height: 0; flex: 1; }
+    .grupo-perm { padding: 14px 18px; border-bottom: 1px solid #303030; }
+    .grupo-perm-header { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #fff; letter-spacing: .5px; margin-bottom: 10px; }
+    .botoes-check { display: flex; flex-wrap: wrap; gap: 8px; }
+    .check-item { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 5px 10px; border-radius: 6px; border: 1px solid #222; transition: all .15s; font-size: 13px; color: #fff; }
+    .check-item:hover { border-color: #3b82f6; color: #e5e5e5; }
+    .check-item.marcado { background: #0d2b2b; border-color: #4dd9ac; color: #4dd9ac; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 24px; width: 420px; }
+    .modal-titulo { font-size: 16px; font-weight: 600; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #2a2a2a; color: #fff; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; color: #fff; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    .form-control { width: 100%; padding: 9px 12px; background: #222; border: 1px solid #2a2a2a; border-radius: 6px; color: #e5e5e5; font-size: 14px; box-sizing: border-box; }
+    .form-control:focus { outline: 0; border-color: #3b82f6; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid #2a2a2a; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; }
+    .btn-primary { background: #007a8c; color: #fff; }
+    .btn-primary:hover { background: #009ab0; }
+    .btn-ghost { background: transparent; color: #777; border: 1px solid #2a2a2a; }
+    .btn-ghost:hover { color: #e5e5e5; border-color: #444; }
+    .btn-success { background: #052e16; color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+    .btn-success:hover { background: #22c55e; color: #fff; }
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-size: 14px; color: #fff; z-index: 999; opacity: 0; transform: translateY(10px); transition: all .3s; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { background: #166534; border: 1px solid #22c55e; }
+    .toast-error { background: #7f1d1d; border: 1px solid #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo"><img src="LOGO.png" alt="TAG"></div>
+    <div class="titulo">ERP | Sistema de Gestao TAG</div>
+    <div style="position:absolute;right:20px;display:flex;align-items:center;gap:10px">
+      <span id="nome-usuario" style="color:#e5e5e5;font-size:14px">Usuario</span>
+      <button type="button" id="btn-voltar" class="btn-topo"></button>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <div class="admin-topo">
+      <h1 style="font-size:20px;color:#fff">Gerenciar Usuarios</h1>
+      <button type="button" class="btn-topo" onclick="abrirModalNovo()">+ Novo Usuario</button>
+    </div>
+
+    <div class="dois-paineis">
+      <div class="painel painel-usuarios">
+        <div class="painel-header"><span>Usuarios</span> <span id="contador-usuarios" style="color:#555;font-size:12px"></span></div>
+        <div id="lista-usuarios"><div style="padding:30px;text-align:center;color:#444">Carregando...</div></div>
+      </div>
+
+      <div class="painel painel-permissoes">
+        <div class="painel-header">
+          <span id="titulo-permissoes">Permissoes</span>
+          <div id="acoes-permissoes-header" class="permissoes-acoes-header" hidden>
+            <button class="btn-perm-acao" onclick="confirmarSalvar()">Salvar</button>
+            <button class="btn-perm-acao" onclick="fecharPainel()">Sair</button>
+            <button id="btn-3pontos" class="btn-perm-menu" onclick="toggleMenu3pontos()">⋮</button>
+            <div id="menu-3pontos" class="menu-perm" hidden>
+              <div class="menu-perm-item" onclick="copiarPermissoes();toggleMenu3pontos()">Copiar permissoes</div>
+              <div id="item-colar-permissoes" class="menu-perm-item disabled" onclick="colarPermissoes();toggleMenu3pontos()">Colar permissoes</div>
+              <div class="menu-perm-item" onclick="abrirModalEditar();toggleMenu3pontos()">Editar usuario</div>
+              <div class="menu-perm-item" onclick="marcarTodos();toggleMenu3pontos()">Marcar todos</div>
+              <div class="menu-perm-item" onclick="desmarcarTodos();toggleMenu3pontos()">Desmarcar todos</div>
+              <div class="menu-perm-item excluir" onclick="excluirUsuarioAtivo();toggleMenu3pontos()">Excluir usuario</div>
+            </div>
+          </div>
+        </div>
+        <div id="painel-permissoes">
+          <div class="permissoes-vazio">Selecione um usuario para gerenciar as permissoes.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modal-confirmar">
+    <div class="modal" style="width:360px;text-align:center">
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px;color:#fff">Salvar permissoes</div>
+      <div style="font-size:13px;color:#777;margin-bottom:24px">Deseja salvar as permissoes e fechar o painel?</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-ghost" onclick="fecharConfirmar()" style="min-width:90px">Nao</button>
+        <button class="btn btn-success" onclick="salvarEFechar()" style="min-width:90px">Sim</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-titulo" id="modal-titulo">Novo Usuario</div>
+      <input type="hidden" id="campo-id">
+      <div class="form-group">
+        <label>Nome Completo *</label>
+        <input type="text" class="form-control" id="campo-nome-completo" placeholder="Nome da pessoa">
+      </div>
+      <div class="form-group">
+        <label>Nome de Usuario *</label>
+        <input type="text" class="form-control" id="campo-nome-usuario" placeholder="ex: joao.silva">
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" class="form-control" id="campo-email" placeholder="email@empresa.com">
+      </div>
+      <div class="form-group" id="grupo-senha">
+        <label>Senha *</label>
+        <input type="password" class="form-control" id="campo-senha" placeholder="Senha de acesso">
+      </div>
+      <div class="form-group" id="grupo-nova-senha" hidden>
+        <label>Nova Senha</label>
+        <input type="password" class="form-control" id="campo-nova-senha" placeholder="Deixe em branco para nao alterar">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="supabase.min.js"></script>
+  <script src="erp.js"></script>
+  <script>
+    let usuarios = [];
+    let todosBotoes = [];
+    let usuarioSelecionado = null;
+    let permissoesAtuais = new Set();
+    let permissoesCopiadas = null;
+
+    async function init() {
+      const usuarioId = sessionStorage.getItem("erp_usuario_id");
+      if (!usuarioId) {
+        
+        return;
+      }
+
+      document.getElementById("nome-usuario").textContent = sessionStorage.getItem("erp_usuario_nome") || "Usuario";
+
+      const origem = new URLSearchParams(window.location.search).get("origem");
+      const voltar = document.getElementById("btn-voltar");
+      if (origem === "menu") {
+        voltar.textContent = "Menu Principal";
+        voltar.onclick = () => { window.location.href = "menu.html"; };
+      } else {
+        voltar.textContent = "Login";
+        voltar.onclick = () => {  };
+      }
+
+      await Promise.all([carregarUsuarios(), carregarBotoes()]);
+    }
+
+    async function carregarUsuarios() {
+      const { data, error } = await db.from("usuarios").select("*").order("nome_completo");
+      if (error) {
+        mostrarToast("Erro ao carregar usuarios: " + error.message, "error");
+        return;
+      }
+
+      usuarios = data || [];
+      document.getElementById("contador-usuarios").textContent = `${usuarios.length} usuario(s)`;
+
+      const lista = document.getElementById("lista-usuarios");
+      if (!usuarios.length) {
+        lista.innerHTML = '<div style="padding:30px;text-align:center;color:#444">Nenhum usuario cadastrado</div>';
+        return;
+      }
+
+      lista.innerHTML = usuarios.map(usuario => `
+        <div class="usuario-item ${usuarioSelecionado && usuarioSelecionado.id === usuario.id ? "selecionado" : ""}" onclick="selecionarUsuario(${usuario.id})">
+          <div class="u-nome">${escapeHtml(usuario.nome_completo || usuario.nome_usuario || "")}</div>
+          <div class="u-login">${escapeHtml(usuario.nome_usuario || "")}</div>
+        </div>
+      `).join("");
+    }
+
+    async function carregarBotoes() {
+      const { data, error } = await db.from("botoes").select("*").order("grupo").order("ordem");
+      if (error) {
+        mostrarToast("Erro ao carregar botoes: " + error.message, "error");
+        return;
+      }
+      todosBotoes = data || [];
+    }
+
+    async function selecionarUsuario(id) {
+      usuarioSelecionado = usuarios.find(usuario => usuario.id === id) || null;
+      if (!usuarioSelecionado) return;
+
+      document.querySelectorAll(".usuario-item").forEach(el => el.classList.remove("selecionado"));
+      const item = Array.from(document.querySelectorAll(".usuario-item")).find(el => el.getAttribute("onclick") === `selecionarUsuario(${id})`);
+      if (item) item.classList.add("selecionado");
+
+      document.getElementById("titulo-permissoes").textContent = `Permissoes - ${usuarioSelecionado.nome_completo || usuarioSelecionado.nome_usuario}`;
+
+      const { data, error } = await db.from("usuario_botoes").select("botao_id").eq("usuario_id", id);
+      if (error) {
+        mostrarToast("Erro ao carregar permissoes: " + error.message, "error");
+        return;
+      }
+
+      permissoesAtuais = new Set((data || []).map(itemPermissao => itemPermissao.botao_id));
+      renderizarPermissoes();
+    }
+
+    function renderizarPermissoes() {
+      const porGrupo = {};
+      todosBotoes.forEach(botao => {
+        const grupo = botao.grupo || "Sem Grupo";
+        if (!porGrupo[grupo]) porGrupo[grupo] = [];
+        porGrupo[grupo].push(botao);
+      });
+
+      const html = Object.keys(porGrupo).sort().map(grupo => {
+        const itens = porGrupo[grupo]
+          .sort((a, b) => Number(a.ordem || 0) - Number(b.ordem || 0) || String(a.label || "").localeCompare(String(b.label || "")))
+          .map(botao => `
+            <div class="check-item ${permissoesAtuais.has(botao.id) ? "marcado" : ""}" onclick="togglePermissao(${botao.id}, this)">
+              ${escapeHtml(botao.label || "")}
+            </div>
+          `).join("");
+
+        return `
+          <div class="grupo-perm">
+            <div class="grupo-perm-header">${escapeHtml(grupo)}</div>
+            <div class="botoes-check">${itens}</div>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("acoes-permissoes-header").hidden = false;
+      document.getElementById("painel-permissoes").innerHTML = `
+        <div class="permissoes-lista-card">
+          <div class="permissoes-lista">${html}</div>
+        </div>
+      `;
+    }
+
+    function togglePermissao(id, el) {
+      if (permissoesAtuais.has(id)) {
+        permissoesAtuais.delete(id);
+        el.classList.remove("marcado");
+      } else {
+        permissoesAtuais.add(id);
+        el.classList.add("marcado");
+      }
+    }
+
+    function marcarTodos() {
+      todosBotoes.forEach(botao => permissoesAtuais.add(botao.id));
+      renderizarPermissoes();
+    }
+
+    function desmarcarTodos() {
+      permissoesAtuais.clear();
+      renderizarPermissoes();
+    }
+
+    function copiarPermissoes() {
+      if (!usuarioSelecionado) {
+        mostrarToast("Selecione um usuario para copiar as permissoes.", "error");
+        return;
+      }
+      permissoesCopiadas = {
+        usuarioNome: usuarioSelecionado.nome_completo || usuarioSelecionado.nome_usuario,
+        botoes: Array.from(permissoesAtuais)
+      };
+      atualizarEstadoColar();
+      mostrarToast("Permissoes copiadas.", "success");
+    }
+
+    function colarPermissoes() {
+      if (!usuarioSelecionado) {
+        mostrarToast("Selecione o usuario que recebera as permissoes.", "error");
+        return;
+      }
+      if (!permissoesCopiadas) {
+        mostrarToast("Copie as permissoes de um usuario primeiro.", "error");
+        return;
+      }
+      permissoesAtuais = new Set(permissoesCopiadas.botoes);
+      renderizarPermissoes();
+      mostrarToast("Permissoes coladas. Clique em Salvar para gravar.", "success");
+    }
+
+    function atualizarEstadoColar() {
+      const item = document.getElementById("item-colar-permissoes");
+      if (item) item.classList.toggle("disabled", !permissoesCopiadas);
+    }
+
+    async function salvarPermissoes() {
+      if (!usuarioSelecionado) return;
+
+      const { error: erroDelete } = await db.from("usuario_botoes").delete().eq("usuario_id", usuarioSelecionado.id);
+      if (erroDelete) {
+        mostrarToast("Erro ao limpar permissoes: " + erroDelete.message, "error");
+        return;
+      }
+
+      if (permissoesAtuais.size > 0) {
+        const payload = Array.from(permissoesAtuais).map(botaoId => ({
+          usuario_id: usuarioSelecionado.id,
+          botao_id: botaoId
+        }));
+        const { error: erroInsert } = await db.from("usuario_botoes").insert(payload);
+        if (erroInsert) {
+          mostrarToast("Erro ao salvar permissoes: " + erroInsert.message, "error");
+          return;
+        }
+      }
+
+      mostrarToast("Permissoes salvas com sucesso.", "success");
+    }
+
+    function abrirModalNovo() {
+      document.getElementById("modal-titulo").textContent = "Novo Usuario";
+      document.getElementById("campo-id").value = "";
+      document.getElementById("campo-nome-completo").value = "";
+      document.getElementById("campo-nome-usuario").value = "";
+      document.getElementById("campo-email").value = "";
+      document.getElementById("campo-senha").value = "";
+      document.getElementById("campo-nova-senha").value = "";
+      document.getElementById("grupo-senha").hidden = false;
+      document.getElementById("grupo-nova-senha").hidden = true;
+      document.getElementById("modal-overlay").classList.add("active");
+    }
+
+    function abrirModalEditar() {
+      if (!usuarioSelecionado) {
+        mostrarToast("Selecione um usuario para editar.", "error");
+        return;
+      }
+      document.getElementById("modal-titulo").textContent = "Editar Usuario";
+      document.getElementById("campo-id").value = usuarioSelecionado.id;
+      document.getElementById("campo-nome-completo").value = usuarioSelecionado.nome_completo || "";
+      document.getElementById("campo-nome-usuario").value = usuarioSelecionado.nome_usuario || "";
+      document.getElementById("campo-email").value = usuarioSelecionado.email || "";
+      document.getElementById("campo-senha").value = "";
+      document.getElementById("campo-nova-senha").value = "";
+      document.getElementById("grupo-senha").hidden = true;
+      document.getElementById("grupo-nova-senha").hidden = false;
+      document.getElementById("modal-overlay").classList.add("active");
+    }
+
+    function fecharModal() {
+      document.getElementById("modal-overlay").classList.remove("active");
+    }
+
+    function fecharPainel() {
+      usuarioSelecionado = null;
+      permissoesAtuais = new Set();
+      document.getElementById("titulo-permissoes").textContent = "Permissoes";
+      document.getElementById("acoes-permissoes-header").hidden = true;
+      document.getElementById("painel-permissoes").innerHTML = '<div class="permissoes-vazio">Selecione um usuario para gerenciar as permissoes.</div>';
+      document.querySelectorAll(".usuario-item").forEach(el => el.classList.remove("selecionado"));
+    }
+
+    function confirmarSalvar() {
+      document.getElementById("modal-confirmar").classList.add("active");
+    }
+
+    function fecharConfirmar() {
+      document.getElementById("modal-confirmar").classList.remove("active");
+    }
+
+    async function salvarEFechar() {
+      fecharConfirmar();
+      await salvarPermissoes();
+      fecharPainel();
+    }
+
+    function toggleMenu3pontos() {
+      const menu = document.getElementById("menu-3pontos");
+      menu.hidden = !menu.hidden;
+    }
+
+    async function hashSenha(texto) {
+      const bytes = new TextEncoder().encode(texto);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function salvarUsuario() {
+      const id = document.getElementById("campo-id").value;
+      const nome = document.getElementById("campo-nome-completo").value.trim().toUpperCase();
+      const nomeUsuario = document.getElementById("campo-nome-usuario").value.trim().toUpperCase();
+      const email = document.getElementById("campo-email").value.trim() || null;
+
+      if (!nome || !nomeUsuario) {
+        mostrarToast("Preencha nome completo e nome de usuario.", "error");
+        return;
+      }
+
+      if (id) {
+        const payload = { nome_completo: nome, nome_usuario: nomeUsuario, email: email };
+        const novaSenha = document.getElementById("campo-nova-senha").value;
+        if (novaSenha) payload.senha_hash = await hashSenha(novaSenha);
+        const { error } = await db.from("usuarios").update(payload).eq("id", id);
+        if (error) {
+          mostrarToast("Erro ao atualizar usuario: " + error.message, "error");
+          return;
+        }
+        mostrarToast("Usuario atualizado.", "success");
+      } else {
+        const senha = document.getElementById("campo-senha").value;
+        if (!senha) {
+          mostrarToast("Informe a senha.", "error");
+          return;
+        }
+        const { error } = await db.from("usuarios").insert({
+          nome_completo: nome,
+          nome_usuario: nomeUsuario,
+          email: email,
+          senha_hash: await hashSenha(senha)
+        });
+        if (error) {
+          mostrarToast("Erro ao criar usuario: " + error.message, "error");
+          return;
+        }
+        mostrarToast("Usuario criado.", "success");
+      }
+
+      fecharModal();
+      await carregarUsuarios();
+    }
+
+    async function excluirUsuarioAtivo() {
+      if (!usuarioSelecionado) {
+        mostrarToast("Selecione um usuario para excluir.", "error");
+        return;
+      }
+
+      const confirmar = window.confirm(`Excluir o usuario ${usuarioSelecionado.nome_completo || usuarioSelecionado.nome_usuario}?`);
+      if (!confirmar) return;
+
+      const { error: erroPermissoes } = await db.from("usuario_botoes").delete().eq("usuario_id", usuarioSelecionado.id);
+      if (erroPermissoes) {
+        mostrarToast("Erro ao excluir permissoes: " + erroPermissoes.message, "error");
+        return;
+      }
+
+      const { error: erroUsuario } = await db.from("usuarios").delete().eq("id", usuarioSelecionado.id);
+      if (erroUsuario) {
+        mostrarToast("Erro ao excluir usuario: " + erroUsuario.message, "error");
+        return;
+      }
+
+      mostrarToast("Usuario excluido.", "success");
+      fecharPainel();
+      await carregarUsuarios();
+    }
+
+    function mostrarToast(msg, tipo) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = `toast toast-${tipo} show`;
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    function escapeHtml(valor) {
+      return String(valor ?? "").replace(/[&<>\"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest("#btn-3pontos") && !event.target.closest("#menu-3pontos")) {
+        const menu = document.getElementById("menu-3pontos");
+        if (menu) menu.hidden = true;
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

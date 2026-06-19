@@ -1,0 +1,506 @@
+/* ============================================================
+   ERP TAG - Estilos compartilhados por TODAS as páginas
+   Altere aqui e a mudança aparece em todo o sistema
+   ============================================================ */
+
+/* Variáveis de cores — mudando aqui, muda em todo o sistema */
+:root {
+  --cor-fundo:     #000000;   /* fundo geral: preto */
+  --cor-sidebar:   #111111;   /* fundo do menu lateral */
+  --cor-card:      #1a1a1a;   /* fundo dos cartões */
+  --cor-borda:     #2a2a2a;   /* cor das bordas */
+  --cor-texto:     #e5e5e5;   /* cor do texto principal */
+  --cor-apagado:   #777777;   /* cor do texto secundário */
+  --cor-destaque:  #3b82f6;   /* azul — cor de destaque */
+  --cor-card-2:    #101010;
+  --cor-destaque-2:#12c6d4;
+  --sombra-card:   0 14px 34px rgba(0,0,0,0.38);
+}
+
+:root {
+  --cor-fundo:     #050505;
+  --cor-sidebar:   #101312;
+  --cor-card:      #151515;
+  --cor-borda:     #252525;
+  --cor-texto:     #f3f4f6;
+  --cor-apagado:   #9ca3af;
+  --cor-destaque:  #00899a;
+}
+
+/* Reset: remove margens e paddings padrão do navegador */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Remove setas de incremento/decremento de todos os inputs numéricos */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+body {
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: "Segoe UI", Arial, sans-serif;
+  line-height: 1.35;
+  overflow-x: hidden;
+  text-rendering: geometricPrecision;
+}
+
+html {
+  scrollbar-color: #555 #080808;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #080808; }
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+  border: 2px solid #080808;
+}
+::-webkit-scrollbar-thumb:hover { background: #777; }
+
+::selection {
+  background: rgba(18,198,212,0.28);
+  color: #ffffff;
+}
+
+/* ---- CABEÇALHO (barra de cima) ---- */
+.header {
+  height: 60px;
+  background: rgba(0,0,0,0.96);
+  border-bottom: 1px solid #121212;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+
+.header .logo img {
+  height: 54px;
+  margin-top: 5mm;
+  display: block;
+}
+
+.header .titulo {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 21px;
+  font-weight: 600;
+  pointer-events: none;
+  left: 0;
+  transform: translateY(5mm);
+}
+
+.header-ref-right {
+  position: absolute !important;
+  right: 20px !important;
+  top: 5mm !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.header-ref-user-icon {
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+.header-ref-user-name {
+  color: #e5e5e5 !important;
+  font-size: 14px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+}
+
+.header-ref-right button,
+.header-ref-right .btn,
+.header-ref-right .btn-novo {
+  min-height: 34px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap;
+}
+
+.sec-header,
+.sec-header-actions,
+.top-actions,
+.filters,
+.filters-panel {
+  align-items: center;
+}
+
+.input-search,
+input[type="search"].form-control,
+.sec-header-actions .form-control,
+.filters .form-control,
+.filters-panel .form-control {
+  min-height: 34px;
+}
+
+/* ---- MENU LATERAL (sidebar) ---- */
+.sidebar {
+  width: 220px;
+  background: var(--cor-sidebar);
+  border-right: 1px solid var(--cor-borda);
+  position: fixed;
+  top: 60px; left: 0; bottom: 0;
+  padding: 15px 0;
+}
+
+/* Título de seção dentro do menu */
+.menu-secao {
+  padding: 8px 20px 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #444;
+  letter-spacing: 1.5px;
+  margin-top: 10px;
+}
+
+/* Links do menu */
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: var(--cor-apagado);
+  text-decoration: none;
+  font-size: 14px;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+
+.sidebar a:hover {
+  color: var(--cor-texto);
+  background: rgba(255,255,255,0.04);
+  border-left-color: #333;
+}
+
+/* Classe "ativo" — página atual fica destacada */
+.sidebar a.ativo {
+  color: var(--cor-texto);
+  background: rgba(59,130,246,0.1);
+  border-left-color: var(--cor-destaque);
+}
+
+/* ---- CONTEÚDO PRINCIPAL ---- */
+.conteudo {
+  margin-left: 220px;
+  padding: 80px 30px 40px;
+}
+
+/* Cabeçalho da página */
+.pagina-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.pagina-header h1 {
+  font-size: 22px;
+}
+
+/* ---- CARDS DE ESTATÍSTICAS ---- */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: var(--cor-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 18px 20px;
+  box-shadow: var(--sombra-card);
+}
+
+.card .icone  { font-size: 26px; margin-bottom: 10px; }
+.card .rotulo { font-size: 12px; color: var(--cor-apagado); margin-bottom: 5px; }
+.card .valor  { font-size: 26px; font-weight: 700; }
+
+/* ---- TABELA ---- */
+.tabela-box {
+  background: var(--cor-card-2);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--sombra-card);
+}
+
+.tabela-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tabela-topo h3 { font-size: 15px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  background: #0a0a0a !important;
+  padding: 10px 14px;
+  text-align: left;
+  font-family: "Segoe UI", Arial, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #9ca3af !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #343434;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) td { background: rgba(255,255,255,0.035); }
+tbody tr:hover td { background: rgba(0,122,140,0.08); }
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea,
+.form-control,
+.input-search {
+  background-color: #0d0d0d;
+  border: 1px solid #2b2b2b;
+  color: var(--cor-texto);
+  border-radius: 7px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus,
+.form-control:focus,
+.input-search:focus {
+  outline: none;
+  border-color: var(--cor-destaque-2);
+  box-shadow: 0 0 0 3px rgba(18,198,212,0.14);
+  background-color: #111;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #667085;
+}
+
+.input-search {
+  background: #151515 !important;
+  border: 1px solid #3a3a3a !important;
+  color: #e5e5e5 !important;
+  box-shadow: none !important;
+}
+
+.input-search:hover {
+  background: #181818 !important;
+  border-color: #555 !important;
+}
+
+.input-search:focus {
+  background: #1a1a1a !important;
+  border-color: #777 !important;
+  box-shadow: 0 0 0 3px rgba(160,160,160,0.14) !important;
+}
+
+.input-search::placeholder {
+  color: #8a8a8a !important;
+}
+
+/* ---- BADGES (etiquetas coloridas de status) ---- */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-azul    { background: #172554; color: #60a5fa; }
+.badge-verde   { background: #052e16; color: #22c55e; }
+.badge-amarelo { background: #422006; color: #f59e0b; }
+.badge-vermelho{ background: #2c0a0a; color: #ef4444; }
+
+/* ---- BOTÃO ---- */
+.btn {
+  padding: 7px 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cor-apagado);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.btn:hover {
+  color: var(--cor-texto);
+  border-color: #444;
+}
+
+/* ---- PADRAO GLOBAL DOS BOTOES ---- */
+button,
+.btn,
+.btn-novo,
+.btn-teal,
+.btn-primary,
+.btn-success,
+.btn-ghost,
+.btn-edit,
+.btn-del,
+.btn-danger,
+.btn-save,
+.btn-pdf,
+.btn-menu-principal,
+.btn-novo-top,
+.btn-voltar {
+  background: #007a8c !important;
+  border: none !important;
+  color: #ffffff !important;
+  padding: 8px 16px !important;
+  border-radius: 7px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  transition: all 0.15s !important;
+}
+
+button:hover,
+.btn:hover,
+.btn-novo:hover,
+.btn-teal:hover,
+.btn-primary:hover,
+.btn-success:hover,
+.btn-ghost:hover,
+.btn-edit:hover,
+.btn-del:hover,
+.btn-danger:hover,
+.btn-save:hover,
+.btn-pdf:hover,
+.btn-menu-principal:hover,
+.btn-novo-top:hover,
+.btn-voltar:hover {
+  background: #009ab0 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+/* ---- BOTOES DE ACAO EM TABELAS ---- */
+.actions-cell {
+  display: flex !important;
+  gap: 6px !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.actions-cell .btn-edit,
+.actions-cell .btn-del,
+.btn-edit[title^="Editar"],
+.btn-del[title^="Excluir"],
+.btn-edit.btn-sm,
+.btn-del.btn-sm,
+.btn-del-local,
+.btn-excluir-local,
+.btn-row-edit,
+.btn-row-del,
+.btn-action-icon,
+.btn-icon[title^="Editar"],
+.btn-icon[title^="Excluir"],
+.btn-icon[title^="Exclus"] {
+  width: 42px !important;
+  height: 35px !important;
+  min-width: 42px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #007a8c !important;
+  border: none !important;
+  border-radius: 7px !important;
+  color: #ffffff !important;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}
+
+.actions-cell .btn-edit:hover,
+.actions-cell .btn-del:hover,
+.btn-edit[title^="Editar"]:hover,
+.btn-del[title^="Excluir"]:hover,
+.btn-edit.btn-sm:hover,
+.btn-del.btn-sm:hover,
+.btn-del-local:hover,
+.btn-excluir-local:hover,
+.btn-row-edit:hover,
+.btn-row-del:hover,
+.btn-action-icon:hover,
+.btn-icon[title^="Editar"]:hover,
+.btn-icon[title^="Excluir"]:hover,
+.btn-icon[title^="Exclus"]:hover {
+  background: #009ab0 !important;
+  color: #ffffff !important;
+}
+
+button:disabled,
+.btn:disabled,
+.btn-novo:disabled,
+.btn-teal:disabled {
+  background: #34565c !important;
+  color: #b8c8cc !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+}
+
+/* ---- BANNER MODO CONSULTA ---- */
+.banner-consulta {
+  display: none;
+  background: linear-gradient(90deg, #1a2a0a, #0d1a0d);
+  border: 1px solid #2a4a1a;
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #7ecf50;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 15px;
+  width: 100%;
+}
+.banner-consulta.visivel {
+  display: flex;
+}

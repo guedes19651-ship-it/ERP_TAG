@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arquitetura - ERP TAG</title>
+  <link rel="stylesheet" href="erp.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    .btn-menu-principal { background:#007a8c; border:none; color:#fff; padding:8px 16px; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600; }
+    .btn-menu-principal:hover { background:#009ab0; }
+
+    .secao { background:#111; border:1px solid #1a1a1a; border-radius:10px; padding:24px; margin-bottom:30px; }
+    .secao h2 { color:#7eb8f7; font-size:16px; margin:0 0 16px 0; border-left:4px solid #7eb8f7; padding-left:10px; }
+
+    .mermaid { background:#0d1117; border-radius:8px; padding:20px; overflow-x:auto; }
+
+    table { border-collapse:collapse; width:100%; }
+    thead th { background:#0a0a0a; padding:8px 14px; text-align:left; font-size:11px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0; }
+    tbody td { padding:8px 14px; border-bottom:1px solid #1a1a1a; font-size:13px; color:#e5e5e5; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:nth-child(odd)  td { background:#141414; }
+    tbody tr:nth-child(even) td { background:#1e1e1e; }
+    td:first-child { color:#f0a500; font-weight:600; }
+
+    .tag-ok   { display:inline-block; background:#052e16; color:#22c55e; border-radius:4px; padding:1px 7px; font-size:11px; font-weight:600; }
+    .tag-wip  { display:inline-block; background:#422006; color:#fb923c; border-radius:4px; padding:1px 7px; font-size:11px; font-weight:600; }
+  </style>
+</head>
+<body>
+
+<!-- CABEÇALHO -->
+<div class="header">
+  <div class="logo"><img src="LOGO.png" alt="TAG"></div>
+  <div class="titulo">ERP | Sistema de Gestão TAG</div>
+  <div style="position:absolute; right:20px; display:flex; align-items:center; gap:12px;">
+    <span style="font-size:20px;">👤</span>
+    <span id="nome-usuario" style="color:#e5e5e5; font-size:14px;"></span>
+    <button type="button" class="btn-menu-principal" onclick="window.location.href='menu.html'">
+      🏠 Menu Principal
+    </button>
+  </div>
+</div>
+
+<main style="padding:80px 30px 40px;">
+
+  <div style="margin-bottom:24px;">
+    <h1 style="font-size:22px; margin:0;">🗂️ Arquitetura do Sistema</h1>
+    <p style="color:#888; font-size:13px; margin:6px 0 0;">Estrutura e relacionamentos entre telas, módulos e banco de dados</p>
+  </div>
+
+  <!-- VISÃO GERAL -->
+  <div class="secao">
+    <h2>1. Visão Geral</h2>
+    <div class="mermaid">
+flowchart TD
+    U([Usuário])
+    IDX[index.html - Login]
+    MNU[menu.html - Menu Principal]
+    SMIN[supabase.min.js - Biblioteca local]
+    ERPJS[erp.js - Conexão + funções compartilhadas]
+    TELAS[Telas dos Módulos]
+    SUPA[(Supabase PostgreSQL)]
+
+    U --> IDX
+    IDX -->|sessão em sessionStorage| MNU
+    MNU --> TELAS
+    SMIN -..->|carregado por todas as telas| TELAS
+    ERPJS -..->|db + confirmar + formatarMoeda| TELAS
+    ERPJS -->|createClient| SUPA
+    TELAS <-->|leitura e gravação| SUPA
+    </div>
+  </div>
+
+  <!-- AUTENTICAÇÃO E PERMISSÕES -->
+  <div class="secao">
+    <h2>2. Autenticação e Permissões</h2>
+    <div class="mermaid">
+flowchart LR
+    U([Usuário])
+    ADM([Administrador])
+    IDX[index.html]
+    MNU[menu.html]
+    TU[(usuarios)]
+    TB[(botoes)]
+    TUB[(usuario_botoes)]
+    OK[Botão liberado]
+    NO[Botão bloqueado - cinza]
+    GUARD[Guard de sessão em todas as telas]
+
+    U -->|usuário + senha SHA-256| IDX
+    IDX -->|verifica| TU
+    IDX -->|grava erp_usuario_id e erp_usuario_nome| GUARD
+    GUARD -->|redireciona se não logado| IDX
+    GUARD --> MNU
+    MNU -->|busca permissões do usuário| TUB
+    TUB -->|referencia label| TB
+    MNU --> OK
+    MNU --> NO
+    ADM -->|libera ou bloqueia botões| TUB
+    ADM -..->|gerencia via| ADMU[admin-usuarios.html]
+    </div>
+  </div>
+
+  <!-- MENU E SUBMENUS -->
+  <div class="secao">
+    <h2>3. Menu Principal — Grupos e Botões</h2>
+    <div class="mermaid">
+flowchart LR
+    MNU[menu.html]
+
+    subgraph Comercial
+        CLI[Clientes]
+        OS[O.S.]
+    end
+    subgraph Contratos
+        CRON[Cronogramas]
+    end
+    subgraph Tecnico
+        FOR[Fornecedores]
+        PRO[Produtos]
+        ACE[Acervo Técnico]
+        FER[Ferramentas]
+    end
+    subgraph Materiais
+        ALM[Almoxarifados]
+        EST[Estoque]
+    end
+    subgraph Suprimentos
+        LOC[Locais Entrega]
+        PED[Pedidos]
+    end
+    subgraph Recebimento
+        REC[Registro]
+    end
+    subgraph Producao
+        TRI[Triangulação]
+    end
+    subgraph Financeiro
+        REE[Reembolso]
+    end
+    subgraph TAG
+        DAD[Dados Cadastrais]
+    end
+    subgraph RH
+        RHH[Portal RH]
+    end
+    subgraph ERPSistema
+        USU[Usuários]
+        BAK[Back-Up]
+        SOB[Sobre...]
+    end
+
+    MNU --> Comercial
+    MNU --> Contratos
+    MNU --> Tecnico
+    MNU --> Materiais
+    MNU --> Suprimentos
+    MNU --> Recebimento
+    MNU --> Producao
+    MNU --> Financeiro
+    MNU --> TAG
+    MNU --> RH
+    MNU --> ERPSistema
+
+    CLI -->|Cadastro| CLI_C[clientes.html]
+    CLI -->|Consulta| CLI_Q[clientes.html?modo=consulta]
+    OS  -->|Cadastro| OS_C[ordens_servico.html]
+    OS  -->|Consulta| OS_Q[ordens_servico.html?modo=consulta]
+    FOR -->|Cadastro| FOR_C[fornecedores.html]
+    FOR -->|Consulta| FOR_Q[fornecedores.html?modo=consulta]
+    PRO -->|Cadastro| PRO_C[produtos.html]
+    PRO -->|Consulta| PRO_Q[produtos.html?modo=consulta]
+    ALM -->|Cadastro| ALM_C[almoxarifado.html]
+    ALM -->|Consulta| ALM_Q[almoxarifado.html?modo=consulta]
+    EST -->|Entradas| EEN[estoque-entradas.html]
+    EST -->|Saídas| ESA[estoque-saidas.html]
+    EST -->|Consulta| ECO[estoque-consulta.html]
+    EST -->|Histórico| EHI[estoque-historico.html]
+    LOC -->|Cadastro| LOC_C[locais-entrega.html]
+    LOC -->|Consulta| LOC_Q[locais-entrega.html?modo=consulta]
+    PED -->|Criar/Editar| PED_C[pedidos-compras.html]
+    PED -->|Consulta| PED_Q[pedidos-compras.html?modo=consulta]
+    SOB -->|Arquitetura| ARQ[arquitetura.html]
+    SOB -->|Lembretes| LEM[sobre.html]
+    </div>
+  </div>
+
+  <!-- MÓDULOS E TABELAS -->
+  <div class="secao">
+    <h2>4. Módulos e Tabelas Supabase</h2>
+    <div class="mermaid">
+flowchart LR
+    subgraph Telas
+        CLI[clientes.html]
+        FOR[fornecedores.html]
+        PRO[produtos.html]
+        OS[ordens_servico.html]
+        ALM[almoxarifado.html]
+        EEN[estoque-entradas.html]
+        ESA[estoque-saidas.html]
+        ECO[estoque-consulta.html]
+        EHI[estoque-historico.html]
+        LOC[locais-entrega.html]
+        PED[pedidos-compras.html]
+        REC[recebimento.html]
+        SOB[sobre.html]
+        ADMU[admin-usuarios.html]
+    end
+
+    subgraph Supabase
+        TC[(clientes)]
+        TF[(fornecedores)]
+        TP[(produtos)]
+        TU[(unidades_medida)]
+        TOS[(ordens_servico)]
+        TA[(almoxarifados)]
+        TE[(estoque_entradas)]
+        TS[(estoque_saldo)]
+        TX[(estoque_saidas)]
+        TL[(locais_entrega)]
+        TM[(manual_lembretes)]
+        TUS[(usuarios)]
+        TB[(botoes)]
+        TUB[(usuario_botoes)]
+    end
+
+    CLI <--> TC
+    FOR <--> TF
+    PRO <--> TP
+    PRO <--> TU
+    OS  <--> TOS
+    ALM <--> TA
+    EEN --> TE
+    EEN --> TS
+    ESA --> TX
+    ESA --> TS
+    ESA -->|filtra Aberto/Em Produção| TOS
+    ECO --> TS
+    EHI --> TE
+    EHI --> TX
+    LOC <--> TL
+    PED <--> TOS
+    PED <--> TF
+    REC <--> TOS
+    SOB <--> TM
+    ADMU <--> TUS
+    ADMU <--> TB
+    ADMU <--> TUB
+    </div>
+  </div>
+
+  <!-- FLUXO DE ESTOQUE -->
+  <div class="secao">
+    <h2>5. Fluxo de Estoque</h2>
+    <div class="mermaid">
+flowchart LR
+    PRO[(produtos)]
+    ALM[(almoxarifados)]
+    OS[(ordens_servico)]
+
+    EEN[estoque-entradas.html]
+    ESA[estoque-saidas.html]
+    ECO[estoque-consulta.html]
+    EHI[estoque-historico.html]
+
+    TE[(estoque_entradas)]
+    TX[(estoque_saidas)]
+    TS[(estoque_saldo)]
+
+    PRO --> EEN
+    ALM --> EEN
+    EEN -->|grava lançamento| TE
+    EEN -->|soma quantidade| TS
+
+    PRO --> ESA
+    ALM --> ESA
+    OS  -->|Aberto ou Em Produção| ESA
+    ESA -->|grava lançamento + numero_os| TX
+    ESA -->|subtrai quantidade| TS
+
+    TS -->|exibe saldo atual| ECO
+    TE -->|histórico entradas| EHI
+    TX -->|histórico saídas + O.S.| EHI
+    </div>
+  </div>
+
+  <!-- FLUXO DE PEDIDOS -->
+  <div class="secao">
+    <h2>6. Fluxo de Pedidos de Compras</h2>
+    <div class="mermaid">
+flowchart LR
+    OS[(ordens_servico)]
+    FOR[(fornecedores)]
+    PRO[(produtos)]
+
+    PED[pedidos-compras.html]
+    REC[recebimento.html]
+
+    FOR --> PED
+    PRO --> PED
+    OS  -->|vinculada ao pedido| PED
+    PED -->|pedido criado/aprovado| REC
+    REC -->|registra recebimento| OS
+    </div>
+  </div>
+
+  <!-- INVENTÁRIO DE TELAS -->
+  <div class="secao">
+    <h2>7. Inventário de Telas</h2>
+    <table>
+      <thead><tr><th>Arquivo</th><th>Módulo / Grupo</th><th>Função</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>index.html</td><td>—</td><td>Login com autenticação SHA-256</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>menu.html</td><td>—</td><td>Menu principal com grupos, submenus e permissões</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>clientes.html</td><td>Comercial</td><td>CRUD de clientes (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>ordens_servico.html</td><td>Comercial</td><td>CRUD de ordens de serviço (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>fornecedores.html</td><td>Técnico</td><td>CRUD de fornecedores (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>produtos.html</td><td>Técnico</td><td>CRUD de produtos com importação/exportação Excel</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>unidades.html</td><td>Técnico</td><td>CRUD de unidades de medida (acesso via ⋮ em produtos.html)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>almoxarifado.html</td><td>Materiais</td><td>CRUD de almoxarifados (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>estoque-entradas.html</td><td>Materiais</td><td>Lançamento de entradas — soma ao saldo</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>estoque-saidas.html</td><td>Materiais</td><td>Lançamento de saídas vinculadas a O.S. — subtrai do saldo</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>estoque-consulta.html</td><td>Materiais</td><td>Consulta de saldo atual por produto/local</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>estoque-historico.html</td><td>Materiais</td><td>Histórico de entradas e saídas com coluna O.S.</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>locais-entrega.html</td><td>Suprimentos</td><td>CRUD de locais de entrega (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>pedidos-compras.html</td><td>Suprimentos</td><td>Pedidos de compras (suporta ?modo=consulta)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>recebimento.html</td><td>Recebimento</td><td>Registro de recebimentos</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>sobre.html</td><td>ERP Sistema</td><td>Lembretes — anotações por módulo (manual_lembretes)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>admin-usuarios.html</td><td>ERP Sistema</td><td>Gerenciar usuários e permissões de botões</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>arquitetura.html</td><td>ERP Sistema</td><td>Documentação visual do sistema (esta tela)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>gerar-hash.html</td><td>Utilitário</td><td>Gera hash SHA-256 de senhas (uso interno)</td><td><span class="tag-ok">✔ OK</span></td></tr>
+        <tr><td>acervo.html</td><td>Técnico</td><td>Acervo técnico</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>ferramentas.html</td><td>Técnico</td><td>Ferramentas</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>triangulacao.html</td><td>Produção</td><td>Módulo de triangulação</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>despesas.html</td><td>Financeiro</td><td>Reembolso de despesas</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>dados-cadastrais.html</td><td>TAG</td><td>Dados cadastrais da empresa</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>portal-rh.html</td><td>RH</td><td>Portal de RH</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+        <tr><td>backup.html</td><td>ERP Sistema</td><td>Back-up do sistema</td><td><span class="tag-wip">⏳ Pendente</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TABELAS DO BANCO -->
+  <div class="secao">
+    <h2>8. Tabelas Supabase</h2>
+    <table>
+      <thead><tr><th>Tabela</th><th>Módulo</th><th>Descrição</th></tr></thead>
+      <tbody>
+        <tr><td>usuarios</td><td>Sistema</td><td>Usuários do ERP — login, senha SHA-256, status ativo</td></tr>
+        <tr><td>botoes</td><td>Sistema</td><td>Catálogo de botões — label, grupo, página, help</td></tr>
+        <tr><td>usuario_botoes</td><td>Sistema</td><td>Permissões: quais botões cada usuário pode acessar</td></tr>
+        <tr><td>clientes</td><td>Comercial</td><td>Cadastro de clientes (CNPJ, razão social, contato)</td></tr>
+        <tr><td>ordens_servico</td><td>Comercial</td><td>Ordens de serviço — status: Aberto, Em Produção, Concluído</td></tr>
+        <tr><td>fornecedores</td><td>Técnico</td><td>Cadastro de fornecedores</td></tr>
+        <tr><td>produtos</td><td>Técnico</td><td>Cadastro de produtos — código, descrição e unidade</td></tr>
+        <tr><td>unidades_medida</td><td>Técnico</td><td>Unidades de medida (símbolo + descrição)</td></tr>
+        <tr><td>almoxarifados</td><td>Materiais</td><td>Almoxarifados — prefixo usado no endereçamento de prateleiras</td></tr>
+        <tr><td>estoque_entradas</td><td>Materiais</td><td>Lançamentos de entrada de estoque (desnormalizados)</td></tr>
+        <tr><td>estoque_saldo</td><td>Materiais</td><td>Saldo atual por produto × almoxarifado × local</td></tr>
+        <tr><td>estoque_saidas</td><td>Materiais</td><td>Lançamentos de saída vinculados a O.S.</td></tr>
+        <tr><td>locais_entrega</td><td>Suprimentos</td><td>Locais de entrega dos pedidos</td></tr>
+        <tr><td>manual_lembretes</td><td>ERP Sistema</td><td>Anotações por módulo para o manual do usuário</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- LEGENDA -->
+  <div class="secao">
+    <h2>Legenda dos Diagramas</h2>
+    <table>
+      <thead><tr><th>Símbolo</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td>Retângulo</td><td>Tela HTML do sistema</td></tr>
+        <tr><td>Cilindro</td><td>Tabela no banco Supabase</td></tr>
+        <tr><td>Oval / ( )</td><td>Ator externo (usuário, administrador)</td></tr>
+        <tr><td>Seta simples →</td><td>Envia ou lê dados</td></tr>
+        <tr><td>Seta dupla ↔</td><td>CRUD completo (criar, ler, editar, excluir)</td></tr>
+        <tr><td>Seta pontilhada</td><td>Dependência indireta (sempre presente)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script src="supabase.min.js"></script>
+<script src="erp.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+  (function init() {
+    document.getElementById('nome-usuario').textContent = sessionStorage.getItem('erp_usuario_nome') || '';
+  })();
+</script>
+</body>
+</html>

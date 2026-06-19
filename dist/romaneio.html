@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Romaneio | ERP TAG</title>
+  <link rel="stylesheet" href="erp.css">
+  <style>
+    .toast { position:fixed; bottom:20px; right:20px; padding:10px 18px; border-radius:8px; font-size:13px; color:white; z-index:999; opacity:0; transform:translateY(8px); transition:all 0.3s; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast-success { background:#166534; border:1px solid #22c55e; }
+    .toast-error { background:#7f1d1d; border:1px solid #ef4444; }
+    .sec-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .sec-header h1 { font-size:22px; color:#fff; margin:0; font-weight:600; }
+    .sec-header-actions { display:flex; gap:8px; align-items:center; }
+    .romaneio-layout { flex:1; min-height:0; display:grid; grid-template-columns:310px minmax(0, 1fr); gap:10px; }
+    .romaneio-principal { min-height:0; display:flex; flex-direction:column; gap:8px; }
+    .painel-romaneios { min-height:0; display:flex; flex-direction:column; gap:10px; }
+    .sel-romaneios { width:100%; cursor:pointer; font-size:11px !important; }
+    .card { border-radius:6px; padding:10px 14px; margin-bottom:0; }
+    .card-cabecalho { background:#0a1017; border:1px solid #172a3a; flex-shrink:0; }
+    .card-itens { background:#111418; border:1px solid #1e293b; flex:1; min-height:360px; display:flex; flex-direction:column; overflow:hidden; }
+    .card-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:7px; padding-bottom:5px; border-bottom:1px solid #1e293b; color:#94a3b8; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .card-titulo-vazio { display:none; }
+    .card-cabecalho .card-titulo { color:#38bdf8; border-bottom-color:#172a3a; }
+    .pagina-barra { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pagina-nav { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .pagina-chip { border:1px solid #1f2937; background:#0b0f12; color:#cbd5e1; border-radius:999px; padding:5px 10px; font-size:11px; cursor:pointer; }
+    .pagina-chip.ativo { background:#007a8c; border-color:#0f9db3; color:#fff; font-weight:700; }
+    .pagina-chip:hover { border-color:#0f9db3; color:#fff; }
+    .btn-pagina { border:none; border-radius:6px; padding:7px 12px; background:#007a8c; color:#fff; font-size:12px; font-weight:700; cursor:pointer; }
+    .btn-pagina:hover { background:#009ab0; }
+    .btn-pagina.del { background:#7f1d1d; }
+    .btn-pagina.del:hover { background:#991b1b; }
+    .pagina-viewport { position:relative; flex:1; min-height:260px; overflow:hidden; }
+    .pagina-card { position:absolute; inset:0; display:flex; flex-direction:column; background:#111418; border:1px solid #1e293b; border-radius:6px; box-shadow:0 10px 24px rgba(0,0,0,.35); transition:transform .2s ease, opacity .2s ease; }
+    .pagina-card.ativo { transform:translateX(0) scale(1); opacity:1; z-index:5; }
+    .pagina-card.inativa { transform:translateX(14px) scale(.985); opacity:.52; z-index:1; pointer-events:none; }
+    .pagina-header { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px 8px; border-bottom:1px solid #1e293b; background:#0d1117; }
+    .pagina-titulo { font-size:11px; font-weight:800; text-transform:uppercase; color:#38bdf8; letter-spacing:.5px; }
+    .pagina-subtitulo { font-size:11px; color:#64748b; }
+    .pagina-conteudo { flex:1; min-height:0; overflow:auto; }
+    .pagina-conteudo::-webkit-scrollbar { height:8px; width:8px; }
+    .pagina-conteudo::-webkit-scrollbar-thumb { background:#334155; border-radius:8px; }
+    .pagina-conteudo::-webkit-scrollbar-track { background:#0b0f12; }
+    .form-row  { display:grid; grid-template-columns:105px 120px minmax(180px, 230px) minmax(220px, 1fr); gap:7px; }
+    .form-row-2 { display:grid; grid-template-columns:minmax(220px, 1.3fr) minmax(140px, .7fr) minmax(140px, .7fr); gap:7px; margin-top:6px; }
+    .form-group { margin-bottom:2px; }
+    .form-group label { display:block; font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; font-weight:600; }
+    .form-control { width:100%; height:30px; padding:5px 8px; background:#0b0f12; border:1px solid #1f2937; border-radius:4px; color:#f8fafc; font-size:12px; box-sizing:border-box; text-transform:uppercase; }
+    .form-control:focus { outline:none; border-color:#007a8c; }
+    .form-control::placeholder { color:#475569; text-transform:none; }
+    select.form-control option { background:#0b0f12; }
+    .campo-readonly { background:#0f172a; color:#cbd5e1 !important; cursor:default; border-color:#1e293b; }
+    textarea.form-control { height:120px; min-height:80px; resize:vertical; line-height:1.35; text-transform:uppercase; }
+    table { width:100%; border-collapse:collapse; min-width:700px; }
+    thead th { background:#0f172a; padding:7px 8px; text-align:left; font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; border-bottom:2px solid #1e293b; white-space:nowrap; }
+    tbody td { padding:5px 6px; border-bottom:1px solid #1e293b; font-size:11px; color:#cbd5e1; vertical-align:middle; }
+    tbody tr:nth-child(even) td { background:#0b0f12; }
+    tbody tr:nth-child(odd) td { background:#111418; }
+    .input-item { width:100%; height:28px; padding:4px 7px; background:#0b0f12; border:1px solid #1f2937; border-radius:4px; color:#f8fafc; font-size:11px; box-sizing:border-box; text-transform:uppercase; }
+    .input-num { text-align:right; padding-right:26px; }
+    .input-unit-wrap { position:relative; display:flex; align-items:center; }
+    .input-unit-wrap input { flex:1; }
+    .unit-suffix { position:absolute; right:6px; font-size:10px; color:#4b6070; pointer-events:none; user-select:none; }
+    .td-acoes { text-align:center; white-space:nowrap; }
+    .painel-acoes { display:grid; grid-template-columns:1fr; gap:8px; margin-top:auto; }
+    .painel-acoes .btn { width:100%; }
+    .painel-dica { font-size:11px; color:#64748b; line-height:1.35; }
+    @media (max-width:1100px) {
+      main { padding-left:20px !important; padding-right:20px !important; }
+      .romaneio-layout { grid-template-columns:1fr; overflow:auto; }
+      .form-row, .form-row-2 { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><img src="LOGO.png" alt="TAG"></div>
+  <div class="titulo">ERP | Sistema de Gestão TAG</div>
+  <div style="position:absolute; right:20px; display:flex; align-items:center; gap:12px;">
+    <span style="font-size:13px; color:#94a3b8;">USUARIO</span>
+    <span id="nome-usuario" style="color:#e5e5e5; font-size:14px;"></span>
+    <button type="button" class="btn btn-teal" onclick="window.location.href='menu.html'">Menu Principal</button>
+  </div>
+</div>
+<main style="padding:70px 2.2% 8px; height:100vh; box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; gap:8px;">
+  <div class="sec-header">
+    <h1>📦 Romaneio</h1>
+    <div class="sec-header-actions">
+      <button type="button" class="btn-novo" onclick="salvarRomaneio(false)">Salvar</button>
+      <button type="button" class="btn-novo" onclick="limparForm()">Novo Romaneio</button>
+    </div>
+  </div>
+  <div class="romaneio-layout">
+    <aside class="card card-cabecalho painel-romaneios">
+      <div class="card-titulo card-titulo-vazio"><span></span></div>
+      <div class="form-group">
+        <select class="form-control sel-romaneios" id="sel-romaneios" aria-label="Selecionar Romaneio" onchange="selecionarRomaneio()">
+          <option value="">Selecione uma O.S.</option>
+        </select>
+      </div>
+      <button type="button" class="btn-pagina" onclick="limparFiltroRomaneios()">Ver todos os romaneios</button>
+      <div class="painel-dica">A lista mostra todos os romaneios salvos. Ao selecionar uma O.S., ela filtra os romaneios daquela ordem.</div>
+      <div class="form-group">
+        <label>Observação Geral</label>
+        <textarea class="form-control" id="campo-observacao" placeholder="Observações do envio..." oninput="this.value=this.value.toUpperCase()"></textarea>
+      </div>
+      <div class="painel-acoes">
+        <button type="button" class="btn btn-del" onclick="excluirRomaneio()">🗑️ Excluir Romaneio</button>
+        <button type="button" class="btn btn-teal" onclick="salvarRomaneio(true)">🖨️ Gerar PDF</button>
+      </div>
+    </aside>
+    <section class="romaneio-principal">
+      <div class="card card-cabecalho">
+        <div class="card-titulo card-titulo-vazio"><span></span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Romaneio</label>
+            <input type="text" class="form-control" id="campo-numero" placeholder="RM-0001" oninput="this.value=mascaraRomaneio(this.value)" onblur="this.value=padRomaneio(this.value)" maxlength="7">
+          </div>
+          <div class="form-group">
+            <label>Nota Fiscal</label>
+            <input type="text" class="form-control" id="campo-nota-fiscal" placeholder="Nº da NF" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-group">
+            <label>Ordem de Serviço</label>
+            <select class="form-control" id="sel-os" onchange="selecionarOS()">
+              <option value="">— Selecione —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Equipamento</label>
+            <input type="text" class="form-control campo-readonly" id="campo-equipamento" readonly tabindex="-1">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Razão Social</label>
+            <input type="text" class="form-control campo-readonly" id="campo-cliente" readonly tabindex="-1">
+          </div>
+          <div class="form-group">
+            <label>Contato</label>
+            <input type="text" class="form-control campo-readonly" id="campo-contato" readonly tabindex="-1">
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" class="form-control campo-readonly" id="campo-telefone" readonly tabindex="-1">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Coordenador</label>
+            <input type="text" class="form-control campo-readonly" id="campo-coordenador" readonly tabindex="-1">
+          </div>
+          <div class="form-group">
+            <label>Tel. Coordenador</label>
+            <input type="text" class="form-control campo-readonly" id="campo-coordenador-telefone" readonly tabindex="-1">
+          </div>
+          <div class="form-group">
+            <label>E-mail Coordenador</label>
+            <input type="text" class="form-control campo-readonly" id="campo-coordenador-email" readonly tabindex="-1" style="text-transform:none;">
+          </div>
+        </div>
+      </div>
+      <div class="card card-itens">
+        <div class="card-titulo">
+          <div class="pagina-barra">
+            <span>Itens Enviados</span>
+            <div class="pagina-nav" id="nav-paginas"></div>
+          </div>
+          <button type="button" class="btn btn-teal" onclick="adicionarItem()">+ Item</button>
+        </div>
+        <div class="pagina-viewport" id="viewport-paginas"></div>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="supabase.min.js"></script>
+<script src="erp.js"></script>
+<script>
+let ordensData = [];
+let paginas = [];
+let paginaAtiva = 0;
+let contadorItem = 0;
+let romaneioEditandoId = null;
+
+(function initSessao() {
+  document.getElementById('nome-usuario').textContent = sessionStorage.getItem('erp_usuario_nome') || '';
+})();
+
+function criarItem(item = {}) {
+  contadorItem++;
+  return {
+    id: contadorItem,
+    descricao: item.descricao || '',
+    quantidade: item.quantidade || 1,
+    altura_mm: item.altura_mm || '',
+    largura_mm: item.largura_mm || '',
+    profundidade_mm: item.profundidade_mm || '',
+    peso_kg: item.peso_kg || ''
+  };
+}
+
+function criarPagina(titulo, itens = []) {
+  return { titulo, itens: itens.map(criarItem) };
+}
+
+function obterPaginaAtiva() {
+  return paginas[paginaAtiva];
+}
+
+function obterEquipamentoOS(os) {
+  return os?.equipamento || '';
+}
+
+function renderizarPaginas() {
+  const nav = document.getElementById('nav-paginas');
+  const viewport = document.getElementById('viewport-paginas');
+  if (!paginas.length) paginas = [criarPagina('Página 1', [criarItem()])];
+  if (paginaAtiva >= paginas.length) paginaAtiva = paginas.length - 1;
+
+  nav.innerHTML = paginas.map((p, idx) => `<button type="button" class="pagina-chip ${idx === paginaAtiva ? 'ativo' : ''}" onclick="trocarPagina(${idx})">${escapeHtml(p.titulo)}</button>`).join('') +
+    `<button type="button" class="btn-pagina" onclick="novaPagina()">+ Página</button>
+     <button type="button" class="btn-pagina del" onclick="apagarPaginaAtual()">Apagar Página</button>`;
+
+  viewport.innerHTML = paginas.map((pagina, idx) => `
+    <div class="pagina-card ${idx === paginaAtiva ? 'ativo' : 'inativa'}">
+      <div class="pagina-header">
+        <div>
+          <div class="pagina-titulo">${escapeHtml(pagina.titulo)}</div>
+          <div class="pagina-subtitulo">${pagina.itens.length} item(ns)</div>
+        </div>
+        <button type="button" class="btn-pagina" onclick="adicionarItem(${idx})">+ Item nesta página</button>
+      </div>
+      <div class="pagina-conteudo">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:38px;">Item</th>
+              <th>Descrição</th>
+              <th style="width:65px;">Qtd</th>
+              <th style="width:85px;">Altura</th>
+              <th style="width:85px;">Largura</th>
+              <th style="width:110px;">Profundidade</th>
+              <th style="width:75px;">Peso</th>
+              <th style="width:52px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pagina.itens.map((item, itemIdx) => `
+              <tr>
+                <td>${itemIdx + 1}</td>
+                <td><input class="input-item" value="${escapeAttr(item.descricao)}" oninput="atualizarItem(${idx}, ${item.id}, 'descricao', this.value.toUpperCase())" placeholder="Equipamento / volume"></td>
+                <td><input class="input-item input-num" type="number" min="0.01" step="0.01" value="${item.quantidade}" oninput="atualizarItem(${idx}, ${item.id}, 'quantidade', this.value)"></td>
+                <td><div class="input-unit-wrap"><input class="input-item input-num" type="number" min="0" step="0.01" value="${item.altura_mm}" oninput="atualizarItem(${idx}, ${item.id}, 'altura_mm', this.value)"><span class="unit-suffix">mm</span></div></td>
+                <td><div class="input-unit-wrap"><input class="input-item input-num" type="number" min="0" step="0.01" value="${item.largura_mm}" oninput="atualizarItem(${idx}, ${item.id}, 'largura_mm', this.value)"><span class="unit-suffix">mm</span></div></td>
+                <td><div class="input-unit-wrap"><input class="input-item input-num" type="number" min="0" step="0.01" value="${item.profundidade_mm}" oninput="atualizarItem(${idx}, ${item.id}, 'profundidade_mm', this.value)"><span class="unit-suffix">mm</span></div></td>
+                <td><div class="input-unit-wrap"><input class="input-item input-num" type="number" min="0" step="0.001" value="${item.peso_kg}" oninput="atualizarItem(${idx}, ${item.id}, 'peso_kg', this.value)"><span class="unit-suffix">kg</span></div></td>
+                <td class="td-acoes"><button type="button" class="btn btn-del" onclick="removerItem(${idx}, ${item.id})" title="Excluir item">🗑️</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `).join('');
+}
+
+function novaPagina() {
+  paginas.push(criarPagina(`Página ${paginas.length + 1}`, [criarItem()]));
+  paginaAtiva = paginas.length - 1;
+  renderizarPaginas();
+}
+
+function apagarPaginaAtual() {
+  if (paginas.length <= 1) {
+    mostrarToast('É necessário manter ao menos uma página.', 'error');
+    return;
+  }
+  paginas.splice(paginaAtiva, 1);
+  paginaAtiva = Math.max(0, paginaAtiva - 1);
+  renderizarPaginas();
+}
+
+function trocarPagina(indice) {
+  paginaAtiva = indice;
+  renderizarPaginas();
+}
+
+function adicionarItem(indicePagina = paginaAtiva) {
+  const pagina = paginas[indicePagina];
+  if (!pagina) return;
+  pagina.itens.push(criarItem());
+  paginaAtiva = indicePagina;
+  renderizarPaginas();
+}
+
+function removerItem(indicePagina, itemId) {
+  const pagina = paginas[indicePagina];
+  if (!pagina) return;
+  pagina.itens = pagina.itens.filter(i => i.id !== itemId);
+  if (!pagina.itens.length) pagina.itens.push(criarItem());
+  renderizarPaginas();
+}
+
+function atualizarItem(indicePagina, itemId, campo, valor) {
+  const pagina = paginas[indicePagina];
+  if (!pagina) return;
+  const item = pagina.itens.find(i => i.id === itemId);
+  if (item) item[campo] = valor;
+}
+
+async function carregarDados() {
+  try {
+    await carregarOrdens();
+    await carregarProximoNumero();
+    await carregarRomaneiosSalvos();
+  } catch (e) {
+    mostrarToast('Erro ao abrir Romaneio: ' + (e.message || e), 'error');
+  } finally {
+    if (!paginas.length) {
+      paginas = [criarPagina('Página 1', [criarItem()])];
+      paginaAtiva = 0;
+      renderizarPaginas();
+    }
+  }
+}
+
+async function carregarOrdens() {
+  const { data, error } = await db.from('ordens_servico')
+    .select('id, numero_os, nome_fantasia, cnpj, contato, celular, equipamento, identificacao, coordenador_nome, coordenador_telefone, coordenador_email')
+    .eq('ativo', true)
+    .order('numero_os');
+  if (error) { mostrarToast('Erro ao carregar O.S.: ' + error.message, 'error'); return; }
+  ordensData = data || [];
+  const sel = document.getElementById('sel-os');
+  sel.innerHTML = '<option value="">— Selecione —</option>' + ordensData.map(os => `<option value="${os.id}">${escapeHtml(os.numero_os)}${os.nome_fantasia ? ' — ' + escapeHtml(os.nome_fantasia) : ''}</option>`).join('');
+}
+
+function carregarProximoNumero() {
+  if (!document.getElementById('campo-numero').value) document.getElementById('campo-numero').value = 'RM-';
+}
+
+function mascaraRomaneio(val) {
+  const digits = val.replace(/^RM-?/i, '').replace(/\D/g, '').slice(0, 4);
+  return 'RM-' + digits;
+}
+
+function padRomaneio(val) {
+  const digits = val.replace(/^RM-?/i, '').replace(/\D/g, '');
+  if (!digits) return 'RM-';
+  return 'RM-' + digits.padStart(4, '0');
+}
+
+function agruparPorPagina(itensBanco) {
+  const mapa = new Map();
+  (itensBanco || []).forEach(item => {
+    const ordem = Number(item.pagina_ordem || 1);
+    if (!mapa.has(ordem)) mapa.set(ordem, []);
+    mapa.get(ordem).push(item);
+  });
+  return [...mapa.entries()].sort((a, b) => a[0] - b[0]);
+}
+
+async function carregarRomaneiosSalvos(osId = null) {
+  const sel = document.getElementById('sel-romaneios');
+  const handler = sel.onchange;
+  sel.onchange = null;
+  try {
+    let query = db.from('romaneios').select('id, numero_romaneio, numero_os, cliente_nome, created_at').order('created_at', { ascending:false });
+    if (osId) query = query.eq('os_id', osId);
+    const { data, error } = await query;
+    if (error) throw error;
+    const titulo = osId ? 'Romaneios desta O.S.' : 'Selecione Romaneio';
+    sel.innerHTML = `<option value="">${titulo}</option>` + (data || []).map(r => {
+      const dt = r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : '';
+      const texto = osId ? `${r.numero_romaneio || ''}${dt ? ' (' + dt + ')' : ''}` : `${r.numero_romaneio || ''}${r.numero_os ? ' - O.S. ' + r.numero_os : ''}${dt ? ' (' + dt + ')' : ''}`;
+      return `<option value="${r.id}">${escapeHtml(texto)}</option>`;
+    }).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Erro ao carregar</option>';
+    mostrarToast('Erro ao carregar romaneios salvos.', 'error');
+  } finally {
+    sel.onchange = handler;
+  }
+}
+
+async function selecionarRomaneio() {
+  const id = document.getElementById('sel-romaneios').value;
+  if (!id) return;
+  const { data: rom, error } = await db.from('romaneios').select('*').eq('id', id).single();
+  if (error || !rom) { mostrarToast('Erro ao carregar romaneio.', 'error'); return; }
+  const { data: itensBanco, error: itensErr } = await db.from('romaneio_itens').select('*').eq('romaneio_id', id).order('item_ordem');
+  if (itensErr) { mostrarToast('Erro ao carregar itens do romaneio.', 'error'); return; }
+  romaneioEditandoId = rom.id;
+  document.getElementById('campo-numero').value = rom.numero_romaneio || '';
+  document.getElementById('campo-nota-fiscal').value = rom.nota_fiscal || '';
+  document.getElementById('sel-os').value = rom.os_id || '';
+  document.getElementById('campo-cliente').value = rom.cliente_nome || '';
+  document.getElementById('campo-contato').value = rom.cliente_contato || '';
+  document.getElementById('campo-telefone').value = formatarTelefone(rom.cliente_telefone || '');
+  document.getElementById('campo-observacao').value = rom.observacao || '';
+  const os = ordensData.find(o => o.id === Number(rom.os_id));
+  await carregarRomaneiosSalvos(rom.os_id);
+  document.getElementById('sel-romaneios').value = String(rom.id);
+  document.getElementById('campo-equipamento').value = obterEquipamentoOS(os);
+  preencherCoordenadorOS(os);
+  paginas = [];
+  contadorItem = 0;
+  const agrupado = agruparPorPagina(itensBanco || []);
+  agrupado.forEach(([ordem, lista]) => {
+    paginas.push(criarPagina(`Página ${ordem}`, lista));
+  });
+  if (!paginas.length) paginas = [criarPagina('Página 1', [criarItem()])];
+  paginaAtiva = 0;
+  renderizarPaginas();
+}
+
+
+
+async function selecionarOS() {
+  const os = ordensData.find(o => o.id === parseInt(document.getElementById('sel-os').value));
+  romaneioEditandoId = null;
+  document.getElementById('sel-romaneios').value = '';
+  if (!os) {
+    document.getElementById('campo-cliente').value = '';
+    document.getElementById('campo-contato').value = '';
+    document.getElementById('campo-telefone').value = '';
+    document.getElementById('campo-equipamento').value = '';
+    preencherCoordenadorOS(null);
+    await carregarRomaneiosSalvos();
+    return;
+  }
+  let nomeCliente = os.nome_fantasia || '';
+  if (os.cnpj) {
+    const { data: cli } = await db.from('clientes').select('razao_social').eq('cnpj', os.cnpj).maybeSingle();
+    if (cli?.razao_social) nomeCliente = cli.razao_social;
+  }
+  document.getElementById('campo-cliente').value = nomeCliente;
+  document.getElementById('campo-contato').value = os.contato || '';
+  document.getElementById('campo-telefone').value = formatarTelefone(os.celular || '');
+  document.getElementById('campo-equipamento').value = obterEquipamentoOS(os);
+  preencherCoordenadorOS(os);
+  await carregarRomaneiosSalvos(os.id);
+}
+
+function preencherCoordenadorOS(os) {
+  document.getElementById('campo-coordenador').value = os?.coordenador_nome || '';
+  document.getElementById('campo-coordenador-telefone').value = formatarTelefone(os?.coordenador_telefone || '');
+  document.getElementById('campo-coordenador-email').value = os?.coordenador_email || '';
+}
+
+async function salvarRomaneio(gerarPdf) {
+  const os = ordensData.find(o => o.id === parseInt(document.getElementById('sel-os').value));
+  if (!os) { mostrarToast('Selecione a Ordem de Serviço.', 'error'); return; }
+  const itensValidos = paginas.flatMap((pagina, idxPagina) => pagina.itens.filter(i => String(i.descricao || '').trim()).map(item => ({ ...item, pagina_ordem: idxPagina + 1 })));
+  if (!itensValidos.length) { mostrarToast('Informe ao menos um item.', 'error'); return; }
+  const cab = {
+    numero_romaneio: document.getElementById('campo-numero').value,
+    nota_fiscal: document.getElementById('campo-nota-fiscal').value.trim().toUpperCase() || null,
+    os_id: os.id,
+    numero_os: os.numero_os,
+    cliente_nome: document.getElementById('campo-cliente').value || null,
+    cliente_contato: document.getElementById('campo-contato').value || null,
+    cliente_telefone: document.getElementById('campo-telefone').value || null,
+    observacao: document.getElementById('campo-observacao').value.trim() || null,
+    usuario_nome: sessionStorage.getItem('erp_usuario_nome') || null
+  };
+  const payloadPdf = itensValidos.map((i, idx) => ({
+    item_ordem: idx + 1,
+    pagina_ordem: i.pagina_ordem,
+    descricao: String(i.descricao || '').trim().toUpperCase(),
+    quantidade: numero(i.quantidade) || 1,
+    altura_mm: numero(i.altura_mm),
+    largura_mm: numero(i.largura_mm),
+    profundidade_mm: numero(i.profundidade_mm),
+    peso_kg: numero(i.peso_kg)
+  }));
+  if (gerarPdf) {
+    const chavePdf = 'pdf_romaneio_' + Date.now();
+    localStorage.setItem(chavePdf, JSON.stringify({
+      cabecalho: cab,
+      equipamento: document.getElementById('campo-equipamento').value || '',
+      coordenador: {
+        nome: document.getElementById('campo-coordenador').value || '',
+        telefone: document.getElementById('campo-coordenador-telefone').value || '',
+        email: document.getElementById('campo-coordenador-email').value || ''
+      },
+      itens: payloadPdf,
+      paginas: paginas.map((pagina, idx) => ({
+        titulo: pagina.titulo,
+        numero: idx + 1,
+        itens: pagina.itens.filter(i => String(i.descricao || '').trim()).map(item => ({
+          descricao: String(item.descricao || '').trim().toUpperCase(),
+          quantidade: numero(item.quantidade) || 1,
+          altura_mm: numero(item.altura_mm),
+          largura_mm: numero(item.largura_mm),
+          profundidade_mm: numero(item.profundidade_mm),
+          peso_kg: numero(item.peso_kg)
+        }))
+      })),
+      hoje: new Date().toLocaleDateString('pt-BR')
+    }));
+    window.open('romaneio-pdf.html?key=' + encodeURIComponent(chavePdf), '_blank');
+  }
+  try {
+    let id = romaneioEditandoId;
+    if (id) {
+      const { error } = await db.from('romaneios').update(cab).eq('id', id);
+      if (error) throw error;
+      const { error: delErr } = await db.from('romaneio_itens').delete().eq('romaneio_id', id);
+      if (delErr) throw delErr;
+    } else {
+      const { data, error } = await db.from('romaneios').insert(cab).select('id').single();
+      if (error) throw error;
+      id = data.id;
+      romaneioEditandoId = id;
+    }
+    const payloadItens = payloadPdf.map(i => ({ ...i, romaneio_id: id }));
+    const { error: itemErr } = await db.from('romaneio_itens').insert(payloadItens);
+    if (itemErr) {
+      if (String(itemErr.message || '').toLowerCase().includes('pagina_ordem')) {
+        throw new Error('O banco ainda não recebeu a migração de páginas. Execute o SQL atualizado do romaneio para criar a coluna pagina_ordem.');
+      }
+      throw itemErr;
+    }
+    mostrarToast('Romaneio salvo com sucesso.', 'success');
+    romaneioEditandoId = id;
+    await carregarRomaneiosSalvos(os.id);
+    document.getElementById('sel-romaneios').value = String(id);
+    document.getElementById('sel-os').value = String(os.id);
+    document.getElementById('campo-numero').value = cab.numero_romaneio || 'RM-';
+    document.getElementById('campo-nota-fiscal').value = cab.nota_fiscal || '';
+    document.getElementById('campo-cliente').value = cab.cliente_nome || '';
+    document.getElementById('campo-contato').value = cab.cliente_contato || '';
+    document.getElementById('campo-telefone').value = formatarTelefone(cab.cliente_telefone || '');
+    preencherCoordenadorOS(os);
+  } catch (e) {
+    mostrarToast('Erro ao salvar: ' + (e.message || e), 'error');
+  }
+}
+
+async function excluirRomaneio() {
+  if (!romaneioEditandoId) { mostrarToast('Selecione um romaneio salvo para excluir.', 'error'); return; }
+  const numero = document.getElementById('campo-numero').value || 'este romaneio';
+  if (!await confirmar(`Excluir o relatório ${numero}?`, 'Confirmar exclusão')) return;
+  try {
+    const { error: itensErr } = await db.from('romaneio_itens').delete().eq('romaneio_id', romaneioEditandoId);
+    if (itensErr) throw itensErr;
+    const { error } = await db.from('romaneios').delete().eq('id', romaneioEditandoId);
+    if (error) throw error;
+    mostrarToast('Romaneio excluído com sucesso.', 'success');
+    limparForm();
+  } catch (e) {
+    mostrarToast('Erro ao excluir: ' + (e.message || e), 'error');
+  }
+}
+
+function limparForm() {
+  romaneioEditandoId = null;
+  document.getElementById('sel-romaneios').value = '';
+  document.getElementById('campo-numero').value = 'RM-';
+  document.getElementById('campo-nota-fiscal').value = '';
+  document.getElementById('sel-os').value = '';
+  document.getElementById('campo-cliente').value = '';
+  document.getElementById('campo-contato').value = '';
+  document.getElementById('campo-telefone').value = '';
+  document.getElementById('campo-equipamento').value = '';
+  preencherCoordenadorOS(null);
+  document.getElementById('campo-observacao').value = '';
+  paginas = [criarPagina('Página 1', [criarItem()])];
+  paginaAtiva = 0;
+  renderizarPaginas();
+  carregarRomaneiosSalvos();
+}
+
+async function limparFiltroRomaneios() {
+  document.getElementById('sel-romaneios').value = '';
+  await carregarRomaneiosSalvos();
+}
+
+function numero(v) {
+  const n = parseFloat(String(v || '').replace(',', '.'));
+  return Number.isNaN(n) ? null : n;
+}
+
+function escapeHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+
+function escapeAttr(v) {
+  return escapeHtml(v).replace(/"/g, '&quot;');
+}
+
+function mostrarToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast toast-${tipo} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+carregarDados();
+</script>
+</body>
+</html>

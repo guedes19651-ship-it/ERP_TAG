@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ERP TAG - Menu Principal</title>
+  <link rel="stylesheet" href="erp.css">
+  <style>
+    .menu-principal{padding:34px 22px 55px;display:flex;flex-wrap:nowrap;gap:18px;align-items:flex-start;justify-content:center;overflow-x:auto;scrollbar-width:thin}
+    .grupo{background:#151515;border:1px solid #252525;border-radius:8px;min-width:143px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.38);transition:all .2s}
+    .grupo:hover{box-shadow:0 18px 42px rgba(0,0,0,.48);transform:translateY(-2px);border-color:#00899a}
+    .grupo-header{background:#1f3766;color:#fff;font-size:14px;font-weight:700;text-align:center;padding:11px 13px 9px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid #284978}
+    .grupo-header .grupo-icone{display:block;font-size:22px;margin-bottom:5px}
+    .grupo-botoes{display:flex;flex-direction:column;gap:3px;padding:7px}
+    .btn-menu{display:block;background:rgba(0,122,140,.07);border:none;border-left:3px solid #007a8c;color:#9deaf0;font-size:14px;text-align:left;padding:10px 13px;border-radius:0 7px 7px 0;text-decoration:none;cursor:pointer;transition:all .18s;line-height:1.3;width:100%;margin-bottom:2px}
+    .btn-menu:hover{background:rgba(0,122,140,.22);border-left-color:#12c6d4;color:#fff;padding-left:18px}
+    .btn-bloqueado{display:block;background:transparent;border-left:3px solid #444;color:#777;font-size:14px;text-align:left;padding:10px 13px;border-radius:0 7px 7px 0;cursor:not-allowed;line-height:1.3;width:100%;font-style:italic;margin-bottom:2px}
+    .btn-bloqueado:hover{color:#888}
+    .btn-parent{position:relative;padding-right:28px}
+    .btn-parent .seta{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;transition:transform .2s;color:#4dd9ac}
+    .btn-parent.aberto .seta{transform:rotate(90deg)}
+    .submenu-container{border-left:2px solid #007a8c;margin:0 0 5px 7px;padding-left:5px;overflow:hidden}
+    .btn-submenu{display:block;background:rgba(0,122,140,.04);border:none;border-left:2px solid #056;color:#6bbfcc;font-size:14px;text-align:left;padding:8px 13px;border-radius:0 6px 6px 0;cursor:pointer;transition:all .18s;width:100%;margin-bottom:2px}
+    .btn-submenu:hover{background:rgba(0,122,140,.2);border-left-color:#4dd9ac;color:#fff;padding-left:18px}
+    .btn-submenu.btn-bloqueado{background:transparent;border-left-color:#444;color:#777;cursor:not-allowed;font-style:italic}
+    .btn-submenu.btn-bloqueado:hover{background:transparent;border-left-color:#444;color:#888;padding-left:13px}
+    .pagina-topo{padding:24px 30px 0;border-bottom:none;margin-bottom:0;background:#000;text-align:left}
+    .pagina-topo h1{font-size:20px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+    .pagina-topo h1 .titulo-icone{font-size:20px;line-height:1}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+    .modal-overlay.aberto{display:flex}
+    .modal-card{width:min(760px,94vw);max-height:88vh;background:#141414;border:1px solid #2a2a2a;border-radius:8px;box-shadow:0 18px 60px rgba(0,0,0,.75);display:flex;flex-direction:column;overflow:hidden}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid #252525}
+    .modal-header h2{font-size:16px;color:#fff;margin:0;text-transform:uppercase}
+    .modal-close{background:#007a8c;border:none;color:#fff;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:18px;font-weight:700}
+    .modal-close:hover{background:#ef4444}
+    .modal-body{padding:16px 18px;overflow:auto}
+    .cfop-table{width:100%;border-collapse:collapse;table-layout:fixed}
+    .cfop-table th{background:#0a0a0a;color:#94a3b8!important;text-align:left;text-transform:uppercase;font-size:11px;font-weight:400!important;letter-spacing:.5px;padding:9px 10px;border-bottom:1px solid #2a2a2a}
+    .cfop-table td{padding:7px 10px;border-bottom:1px solid #242424;background:#111}
+    .cfop-table tr:nth-child(2n) td{background:#181818}
+    .cfop-input{width:100%;box-sizing:border-box;background:#0b0f12;border:1px solid #2a2a2a;border-radius:5px;color:#e5e5e5;padding:7px 9px;font-size:13px;text-transform:uppercase}
+    .cfop-input:focus{outline:none;border-color:#007a8c}
+    .modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #252525}
+    .btn{padding:7px 15px;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+    .btn-teal{background:#007a8c;color:#fff}
+    .btn-teal:hover{background:#009ab0}
+    .btn-ghost{background:transparent;color:#aaa;border:1px solid #333}
+    .btn-ghost:hover{border-color:#555;color:#fff}
+    .toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:8px;font-size:13px;color:#fff;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast-success{background:#166534;border:1px solid #22c55e}
+    .toast-error{background:#7f1d1d;border:1px solid #ef4444}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo"><img src="LOGO.png" alt="TAG"></div>
+    <div class="titulo">ERP | Sistema de Gest&atilde;o TAG</div>
+    <div style="position:absolute;right:20px;top:5mm;display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px">&#128100;</span>
+      <span id="nome-usuario" style="color:#e5e5e5;font-size:14px">Usu&aacute;rio</span>
+      <button onclick="sair()" style="background:#1a3a6e;border:1px solid #2a5aae;color:#a0c4ff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s" onmouseover='this.style.background="#2a5aae";this.style.color="white"' onmouseout='this.style.background="#1a3a6e";this.style.color="#a0c4ff"'>&#128274; Login</button>
+    </div>
+  </div>
+
+  <main style="padding-top:60px">
+    <div class="pagina-topo">
+      <h1><span class="titulo-icone">&#127968;</span>Menu Principal</h1>
+    </div>
+    <div class="menu-principal" id="menu-principal"></div>
+  </main>
+  <div class="modal-overlay" id="modal-cfop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>CFOP</h2>
+        <button type="button" class="modal-close" onclick="fecharCfop()">Ã—</button>
+      </div>
+      <div class="modal-body" id="cfop-lista"><div style="color:#777;padding:22px;text-align:center">Carregando CFOP...</div></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="fecharCfop()">Cancelar</button>
+        <button type="button" class="btn btn-teal" id="btn-salvar-cfop" onclick="salvarCfop()">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="supabase.min.js"></script>
+  <script src="erp.js"></script>
+  <script>
+    let cfops = [];
+    const grupos = [
+      {nome:"TAG",icone:"&#127970;",botoes:[{label:"Dados Cadastrais",pagina:"dados-cadastrais.html"}]},
+      {nome:"Comercial",icone:"&#128722;",botoes:[
+        {label:"Clientes",submenu:[
+          {label:"Clientes",labelExibicao:"Cadastro",pagina:"clientes.html"},
+          {label:"Clientes - Consulta",labelExibicao:"Consulta",pagina:"clientes.html?modo=consulta"}
+        ]},
+        {label:"Proposta",pagina:"em_desenvolvimento.html"},
+        {label:"O.S.",submenu:[
+          {label:"O.S.",labelExibicao:"Cadastro",pagina:"ordens_servico.html"},
+          {label:"O.S. - Consulta",labelExibicao:"Consulta",pagina:"ordens_servico.html?modo=consulta"}
+        ]}
+      ]},
+      {nome:"Contratos",icone:"&#128203;",botoes:[
+        {label:"Cronogramas",pagina:"https://outlook.cloud.microsoft/calendar/view/month"},
+        {label:"Romaneio",pagina:"romaneio.html?v=20260614-2"}
+      ]},
+      {nome:"ENGENHARIA",icone:"&#9881;&#65039;",botoes:[
+        {label:"Fornecedores",submenu:[
+          {label:"Fornecedores",labelExibicao:"Cadastro",pagina:"fornecedores.html"},
+          {label:"Fornecedores - Consulta",labelExibicao:"Consulta",pagina:"fornecedores.html?modo=consulta"}
+        ]},
+        {label:"Produtos",submenu:[
+          {label:"Produtos",labelExibicao:"Cadastro",pagina:"produtos.html"},
+          {label:"Produtos - Consulta",labelExibicao:"Consulta",pagina:"produtos.html?modo=consulta"}
+        ]},
+        {label:"Acervo Técnico",pagina:"em_desenvolvimento.html"},
+        {label:"Treinamento",pagina:"em_desenvolvimento.html"},
+        {label:"Ferramentas",pagina:"em_desenvolvimento.html"}
+      ]},
+      {nome:"Suprimentos",icone:"&#128717;&#65039;",botoes:[
+        {label:"Almoxarifados",submenu:[
+          {label:"Almoxarifados",labelExibicao:"Cadastro",pagina:"almoxarifado.html"},
+          {label:"Almoxarifados - Consulta",labelExibicao:"Consulta",pagina:"almoxarifado.html?modo=consulta"}
+        ]},
+        {label:"Estoque",submenu:[
+          {label:"Estoque - Entradas",labelExibicao:"Entradas",pagina:"estoque-entradas.html"},
+          {label:"Estoque - Saídas",labelExibicao:"Saídas",pagina:"estoque-saidas.html"},
+          {label:"Estoque - Consulta",labelExibicao:"Consulta",pagina:"estoque-consulta.html"},
+          {label:"Estoque - Histórico",labelExibicao:"Histórico",pagina:"estoque-historico.html"}
+        ]},
+        {label:"Logística",labelExibicao:"Logística",submenu:[
+          {label:"Parceiros",labelExibicao:"Parceiros",submenu:[
+            {label:"Parceiros - Cadastro",labelExibicao:"Cadastro",pagina:"parceiros.html"},
+            {label:"Parceiros - Consulta",labelExibicao:"Consulta",pagina:"parceiros.html?modo=consulta"}
+          ]}
+        ]},
+        {label:"Compras",labelExibicao:"Compras",submenu:[
+          {label:"Pedidos",labelExibicao:"Pedidos",submenu:[
+            {label:"Pedidos - Criar / Editar",labelExibicao:"Criar / Editar",pagina:"pedidos-compras.html"},
+            {label:"Pedidos - Consulta",labelExibicao:"Consulta",pagina:"pedidos-compras.html?modo=consulta"},
+            {label:"Pedidos - Visão Geral",labelExibicao:"Visão Geral",pagina:"pedidos-lista.html"},
+            {label:"Pedidos - Status",labelExibicao:"Status",pagina:"status-pedidos.html"},
+            {label:"Pedidos - Rastreamento",labelExibicao:"Rastreamento",pagina:"os-pedidos.html"},
+            {label:"Pedidos - Pesquisa Material",labelExibicao:"Pesquisa Material",pagina:"material-pesquisa.html"}
+          ]}
+        ]},
+        {label:"Recebimento",labelExibicao:"Recebimento",submenu:[
+          {label:"Registrar",pagina:"recebimento.html?modo=fat"},
+          {label:"Notas Recebidas",pagina:"notas-recebidas.html"}
+        ]},
+        {label:"Devolução",pagina:"em_desenvolvimento.html"}
+      ]},
+      {nome:"Financeiro",icone:"&#128176;",botoes:[
+        {label:"CFOP",pagina:"cfop-popup"},
+        {label:"Relat. Despesa",submenu:[
+          {label:"Taxa de KM",pagina:"taxa-km.html"},
+          {label:"Criar / Editar",pagina:"despesas.html?v=20260618-1"},
+          {label:"Aprovar",pagina:"despesas-aprovacao.html"}
+        ]}
+      ]},
+      {nome:"RH",icone:"&#128101;",botoes:[{label:"Portal RH",pagina:"em_desenvolvimento.html"}]},
+      {nome:"ERP Sistema",icone:"&#128421;&#65039;",botoes:[
+        {label:"Usuários",pagina:"admin-usuarios.html?origem=menu"},
+        {label:"Back-Up",pagina:"backup.html"},
+        {label:"Sobre…",submenu:[
+          {label:"Arquitetura",pagina:"arquitetura.html"},
+          {label:"Lembretes",pagina:"sobre.html"}
+        ]}
+      ]}
+    ];
+
+    function normalizarLabel(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+    }
+
+    async function init() {
+      const usuarioId = sessionStorage.getItem("erp_usuario_id");
+      const usuarioNome = sessionStorage.getItem("erp_usuario_nome");
+      if (!usuarioId) {
+        
+        return;
+      }
+      document.getElementById("nome-usuario").textContent = usuarioNome || "Usuário";
+      const {data} = await db.from("usuario_botoes").select("botoes(label)").eq("usuario_id", usuarioId);
+      montarMenu(new Set((data || []).map(item => normalizarLabel(item.botoes?.label))));
+    }
+
+    function montarMenu(permissoes) {
+      function temPermissao(lista) {
+        return lista.some(item => item.submenu ? temPermissao(item.submenu) : permissoes.has(normalizarLabel(item.label)));
+      }
+
+      function renderBotao(item, classeBase) {
+        if (item.submenu) {
+          const liberado = temPermissao(item.submenu);
+          const id = "sub-" + item.label.replace(/[^a-z0-9]/gi, "");
+          const filhos = item.submenu.map(filho => renderBotao(filho, "btn-submenu")).join("");
+          const texto = item.labelExibicao || item.label;
+
+          if (liberado) {
+            return `
+              <span class="${classeBase} btn-parent" data-label="${item.label}" onclick="toggleSubmenu('${id}', event)">
+                ${texto} <span class="seta">&#9654;</span>
+              </span>
+              <div class="submenu-container" id="${id}" style="display:none;">${filhos}</div>`;
+          }
+
+          return `
+            <span class="${classeBase} btn-parent btn-bloqueado" data-label="${item.label}">
+              ${texto} <span class="seta">&#9654;</span>
+            </span>
+            <div class="submenu-container" id="${id}" style="display:none;">${filhos}</div>`;
+        }
+
+        const texto = item.labelExibicao || item.label;
+        const labelSeguro = item.label.replace(/'/g, "\\'");
+        if (permissoes.has(normalizarLabel(item.label))) {
+          return `<span class="${classeBase}" data-label="${item.label}" onclick="clicarBotao('${labelSeguro}', '${item.pagina}')">${texto}</span>`;
+        }
+        return `<span class="${classeBase} btn-bloqueado" data-label="${item.label}">${texto}</span>`;
+      }
+
+      document.getElementById("menu-principal").innerHTML = grupos.map(grupo => `
+        <div class="grupo">
+          <div class="grupo-header">
+            <span class="grupo-icone">${grupo.icone || ""}</span>
+            ${grupo.nome}
+          </div>
+          <div class="grupo-botoes">${grupo.botoes.map(item => renderBotao(item, "btn-menu")).join("")}</div>
+        </div>
+      `).join("");
+    }
+
+    function fecharSubmenus(ativo) {
+      document.querySelectorAll(".submenu-container").forEach(el => {
+        if (el !== ativo && !(ativo && el.contains(ativo))) {
+          el.style.display = "none";
+          el.previousElementSibling?.classList.remove("aberto");
+        }
+      });
+    }
+
+    function toggleSubmenu(id, event) {
+      event?.stopPropagation();
+      const submenu = document.getElementById(id);
+      const botao = submenu?.previousElementSibling;
+      if (!submenu) return;
+      const aberto = submenu.style.display !== "none";
+      fecharSubmenus(aberto ? null : submenu);
+      submenu.style.display = aberto ? "none" : "block";
+      botao?.classList.toggle("aberto", !aberto);
+    }
+
+    function clicarBotao(label, pagina) {
+      if (label === "CFOP") {
+        abrirCfop();
+        return;
+      }
+      if (pagina.startsWith("http")) {
+        window.open(pagina, "_blank");
+      } else {
+        location.href = pagina;
+      }
+    }
+
+    function mostrarToast(msg, tipo) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = `toast toast-${tipo} show`;
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    async function abrirCfop() {
+      document.getElementById("modal-cfop").classList.add("aberto");
+      await carregarCfop();
+    }
+
+    function fecharCfop() {
+      document.getElementById("modal-cfop").classList.remove("aberto");
+    }
+
+    async function carregarCfop() {
+      const corpo = document.getElementById("cfop-lista");
+      corpo.innerHTML = '<div style="color:#777;padding:22px;text-align:center">Carregando CFOP...</div>';
+      const {data, error} = await db.from("cfop_recebimento")
+        .select("id, local_faturamento, local_entrega")
+        .eq("ativo", true)
+        .order("id");
+      if (error) {
+        corpo.innerHTML = '<div style="color:#ef4444;padding:22px;text-align:center">Erro ao carregar CFOP.</div>';
+        mostrarToast("Erro ao carregar CFOP: " + error.message, "error");
+        return;
+      }
+      cfops = data || [];
+      renderCfop();
+    }
+
+    function renderCfop() {
+      const corpo = document.getElementById("cfop-lista");
+      if (!cfops.length) {
+        corpo.innerHTML = '<div style="color:#777;padding:22px;text-align:center">Nenhum CFOP cadastrado.</div>';
+        return;
+      }
+      corpo.innerHTML = `
+        <table class="cfop-table">
+          <thead>
+            <tr>
+              <th>Local Faturamento</th>
+              <th>Local Entrega</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cfops.map(item => `
+              <tr>
+                <td><input class="cfop-input" id="cfop-fat-${item.id}" value="${escapeHtml(item.local_faturamento || "")}" oninput="this.value=this.value.toUpperCase()"></td>
+                <td><input class="cfop-input" id="cfop-ent-${item.id}" value="${escapeHtml(item.local_entrega || "")}" oninput="this.value=this.value.toUpperCase()"></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    async function salvarCfop() {
+      if (!cfops.length) return;
+      const dados = cfops.map(item => ({
+        id: item.id,
+        local_faturamento: document.getElementById(`cfop-fat-${item.id}`).value.trim().toUpperCase(),
+        local_entrega: document.getElementById(`cfop-ent-${item.id}`).value.trim().toUpperCase() || null
+      }));
+      if (dados.some(item => !item.local_faturamento)) {
+        mostrarToast("Preencha todos os CFOPs de Local Faturamento.", "error");
+        return;
+      }
+      const repetidos = dados.map(item => item.local_faturamento).filter((valor, idx, arr) => arr.indexOf(valor) !== idx);
+      if (repetidos.length) {
+        mostrarToast("Existe CFOP de Local Faturamento repetido.", "error");
+        return;
+      }
+      const btn = document.getElementById("btn-salvar-cfop");
+      btn.disabled = true;
+      btn.textContent = "Salvando...";
+      try {
+        for (const item of dados) {
+          const {error} = await db.from("cfop_recebimento").update({
+            local_faturamento: item.local_faturamento,
+            local_entrega: item.local_entrega
+          }).eq("id", item.id);
+          if (error) throw error;
+        }
+        mostrarToast("CFOP salvo com sucesso.", "success");
+        fecharCfop();
+      } catch (error) {
+        mostrarToast("Erro ao salvar CFOP: " + (error.message || error), "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Salvar";
+      }
+    }
+
+    function escapeHtml(valor) {
+      return String(valor ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      }[c]));
+    }
+
+    function sair() {
+      sessionStorage.clear();
+      
+    }
+
+    document.addEventListener("click", () => fecharSubmenus(null));
+    init();
+  </script>
+</body>
+</html>
+

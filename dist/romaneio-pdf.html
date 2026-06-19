@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Romaneio</title>
+  <style>
+    @page { size:A4 portrait; margin:10mm 12mm; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:Arial, sans-serif; font-size:8.5pt; color:#111; background:#d9d9d9; padding:12mm 0; }
+    .pagina { background:#fff; width:210mm; min-height:297mm; margin:0 auto 8mm; padding:10mm 12mm 16mm; box-shadow:0 0 20px rgba(0,0,0,.25); position:relative; page-break-after:always; }
+    .hdr { position:relative; padding-bottom:7px; border-bottom:3px solid #007a8c; margin-bottom:6mm; }
+    .hdr-logo img { height:48px; width:auto; }
+    .hdr-info { margin-top:5px; display:flex; flex-direction:column; gap:2px; }
+    .hdr-nome { font-size:10.5pt; font-weight:700; color:#004a56; }
+    .hdr-det { font-size:7.2pt; color:#555; line-height:1.35; }
+    .hdr-doc { position:absolute; top:0; right:0; text-align:right; }
+    .doc-t { font-size:13pt; font-weight:800; color:#007a8c; letter-spacing:1px; }
+    .doc-n { font-size:18pt; font-weight:800; color:#004a56; margin-top:2px; }
+    .doc-d { font-size:8pt; color:#666; margin-top:4px; }
+    .sec { border:1.5px solid #a8d4de; border-radius:4px; padding:7px 9px; background:#f0f8fa; margin-bottom:5mm; }
+    .sec-t { font-size:7.8pt; font-weight:800; color:#004a56; text-transform:uppercase; letter-spacing:.7px; border-bottom:1px solid #a8d4de; padding-bottom:4px; margin-bottom:6px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:8px; }
+    .lbl { display:block; font-size:7pt; font-weight:800; color:#007a8c; text-transform:uppercase; margin-bottom:2px; }
+    .val { display:block; font-size:9pt; font-weight:400; color:#111; word-break:break-word; }
+    table { width:100%; border-collapse:collapse; font-size:7.5pt; margin-top:3mm; }
+    thead th { background:#007a8c; color:#fff; padding:5px 6px; text-align:left; font-size:7pt; font-weight:800; text-transform:uppercase; border-bottom:2px solid #005a68; }
+    tbody td { padding:5px 6px; border-bottom:1px solid #cce4ea; color:#222; }
+    tbody tr:nth-child(odd) td { background:#f0f8fb; }
+    tbody tr:nth-child(even) td { background:#fff; }
+    .c { text-align:center; }
+    .r { text-align:right; }
+    .b { font-weight:400; color:#004a56; }
+    .obs { margin-top:5mm; border:1.5px solid #e0c840; background:#fffbea; border-radius:4px; padding:6px 9px; min-height:16mm; }
+    .obs .lbl { color:#9a7000; }
+    .rodape { position:absolute; left:12mm; right:12mm; bottom:8mm; border-top:1px solid #ccc; padding-top:5px; display:flex; justify-content:space-between; gap:10px; font-size:7.5pt; color:#555; }
+    .acoes-pdf { position:fixed; left:50%; bottom:8px; transform:translateX(-50%); z-index:2000; display:flex; gap:8px; }
+    .acoes-pdf button { border:none; border-radius:5px; padding:8px 12px; background:#007a8c; color:#fff; font-size:12px; font-weight:700; cursor:pointer; }
+    .acoes-pdf button:hover { background:#009ab0; }
+    .erro { background:#fff; color:#b91c1c; padding:40px; text-align:center; font-size:14px; }
+    .pagina-num { position:absolute; right:12mm; bottom:4mm; font-size:7.2pt; color:#666; }
+    .quebra { page-break-after:always; }
+    @media print {
+      body { background:#fff; padding:0; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+      .pagina { width:auto; min-height:auto; margin:0; box-shadow:none; page-break-after:always; }
+      .acoes-pdf { display:none; }
+    }
+  </style>
+</head>
+<body>
+<script src="supabase.min.js"></script>
+<script src="erp.js"></script>
+<script>
+(async function gerar() {
+  const chavePdf = new URLSearchParams(location.search).get('key') || 'pdf_romaneio';
+  const raw = localStorage.getItem(chavePdf);
+  if (!raw) {
+    document.body.innerHTML = '<div class="erro">Dados não encontrados. Gere o PDF a partir da tela de Romaneio.</div>';
+    return;
+  }
+  localStorage.removeItem(chavePdf);
+  const dados = JSON.parse(raw);
+  const cab = dados.cabecalho || {};
+  const coord = dados.coordenador || {};
+  const paginas = dados.paginas || [];
+  const { data: empresa } = await db.from('dados_cadastrais').select('*').order('id').limit(1).single();
+  const fmt = (v, casas = 2) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+  const h = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  const totalPaginas = Math.max(1, paginas.length || 1);
+  const blocos = (paginas.length ? paginas : [{ numero: 1, titulo: 'Página 1', itens: dados.itens || [] }]).map((pagina, idx) => {
+    const linhas = (pagina.itens || []).map((item, itemIdx) => `
+      <tr>
+        <td class="c">${itemIdx + 1}</td>
+        <td class="b">${h(item.descricao || '—')}</td>
+        <td class="c">${fmt(item.quantidade, 2)}</td>
+        <td class="c">${fmt(item.altura_mm, 2)}</td>
+        <td class="c">${fmt(item.largura_mm, 2)}</td>
+        <td class="c">${fmt(item.profundidade_mm, 2)}</td>
+        <td class="c">${fmt(item.peso_kg, 3)}</td>
+      </tr>
+    `).join('');
+    return `
+      <div class="pagina">
+        <div class="hdr">
+          <div class="hdr-logo"><img src="LOGO_2.png" onerror="this.src='LOGO.png';this.onerror=null;" alt="TAG"></div>
+          <div class="hdr-info">
+            <div class="hdr-nome">${h(empresa?.razao_social || 'TAG INTEGRADORA DE SISTEMAS DE AUTOMAÇÃO INDUSTRIAL LTDA.')}</div>
+            <div class="hdr-det">CNPJ: ${h(empresa?.cnpj || '—')} | IE: ${h(empresa?.insc_estadual || '—')} | IM: ${h(empresa?.insc_municipal || '—')}</div>
+            <div class="hdr-det">${h(empresa?.end_fat_logradouro || '—')} — CEP ${h(empresa?.end_fat_cep || '—')} — ${h(empresa?.end_fat_cidade || '—')}/${h(empresa?.end_fat_uf || '—')}</div>
+            <div class="hdr-det">${h(empresa?.email || '')} ${empresa?.site ? '| ' + h(empresa.site) : ''}</div>
+          </div>
+          <div class="hdr-doc">
+            <div class="doc-t">ROMANEIO</div>
+            <div class="doc-n">${h(cab.numero_romaneio || '—')}</div>
+            <div class="doc-d">Emitido em: ${h(dados.hoje || new Date().toLocaleDateString('pt-BR'))}</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-t">Cliente e Ordem de Serviço</div>
+          <div class="grid">
+            <div><span class="lbl">O.S.</span><span class="val">${h(cab.numero_os || '—')}</span></div>
+            <div><span class="lbl">Nota Fiscal</span><span class="val">${h(cab.nota_fiscal || '—')}</span></div>
+            <div style="grid-column:span 2;"><span class="lbl">Razão Social</span><span class="val">${h(cab.cliente_nome || '—')}</span></div>
+            <div><span class="lbl">Contato</span><span class="val">${h(cab.cliente_contato || '—')}</span></div>
+            <div><span class="lbl">Telefone</span><span class="val">${h(cab.cliente_telefone || '—')}</span></div>
+            <div style="grid-column:span 2;"><span class="lbl">Equipamento</span><span class="val">${h(dados.equipamento || '—')}</span></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-t">Coordenador do Projeto</div>
+          <div class="grid">
+            <div style="grid-column:span 2;"><span class="lbl">Nome</span><span class="val">${h(coord.nome || '—')}</span></div>
+            <div><span class="lbl">Telefone</span><span class="val">${h(coord.telefone || '—')}</span></div>
+            <div style="grid-column:span 2;"><span class="lbl">E-mail</span><span class="val">${h(coord.email || '—')}</span></div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:28px;" class="c">Item</th>
+              <th>Descrição</th>
+              <th style="width:48px;" class="c">Qtd</th>
+              <th style="width:62px;" class="c">Altura<br>mm</th>
+              <th style="width:62px;" class="c">Largura<br>mm</th>
+              <th style="width:78px;" class="c">Profund.<br>mm</th>
+              <th style="width:62px;" class="c">Peso<br>kg</th>
+            </tr>
+          </thead>
+          <tbody>${linhas}</tbody>
+        </table>
+        ${cab.observacao ? `<div class="obs"><span class="lbl">Observação Geral</span>${h(cab.observacao)}</div>` : ''}
+        <div class="rodape">
+          <div>Gerado por: <span>${h(cab.usuario_nome || 'ERP TAG')}</span></div>
+          <div>ERP TAG — Sistema de Gestão</div>
+        </div>
+        <div class="pagina-num">Página ${idx + 1} de ${totalPaginas}</div>
+      </div>
+    `;
+  }).join('');
+  document.body.innerHTML = `
+    <div class="acoes-pdf">
+      <button type="button" onclick="window.print()">Salvar / Imprimir PDF</button>
+      <button type="button" onclick="window.close()">Fechar</button>
+    </div>
+    ${blocos}
+  `;
+})();
+</script>
+</body>
+</html>
